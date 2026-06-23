@@ -26,5 +26,7 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Binary/large files
+# Binary/large files — allow specific docs
 *.pdf
+!ESC AI CVD PREVENT  Report.pdf
+!CognicacApi User guide.pdf
