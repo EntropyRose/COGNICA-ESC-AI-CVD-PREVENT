@@ -11,11 +11,15 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import java.time.Duration;
+
+import io.netty.channel.ChannelOption;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
 import com.example.app.model.CognicaResponse;
 import com.example.app.model.Fact;
@@ -58,7 +63,12 @@ public class CognicaController {
 
     @PostConstruct
     private void initWebClient() {
+        HttpClient httpClient = HttpClient.create()
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
+            .responseTimeout(Duration.ofSeconds(30));
+
         this.webClient = WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(httpClient))
             .defaultHeaders(headers -> {
                 headers.setBasicAuth(cognicaUsername, cognicaPassword);
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -103,7 +113,13 @@ public class CognicaController {
             .uri(COGNICA_URL)
             .bodyValue(cleanRequest)
             .retrieve()
-            .toEntity(CognicaResponse.class);
+            .toEntity(CognicaResponse.class)
+            .onErrorResume(ex -> {
+                CognicaResponse errorResponse = new CognicaResponse();
+                errorResponse.setHasError(true);
+                errorResponse.setErrorMessage("Cognica API unreachable: " + ex.getMessage());
+                return Mono.just(ResponseEntity.status(503).body(errorResponse));
+            });
     }
 
     /**
