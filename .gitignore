@@ -1,0 +1,30 @@
+# Gradle
+.gradle/
+build/
+bin/
+*.class
+gradle-*.zip
+
+# Temp files
+temp/
+
+# Bundled JDK
+oracleJdk-25/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Claude Code
+.claude/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Binary/large files
+*.pdf

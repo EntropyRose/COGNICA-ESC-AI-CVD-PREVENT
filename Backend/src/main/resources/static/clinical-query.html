@@ -1,0 +1,2884 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Medical Query Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Manrope", "Segoe UI", Tahoma, sans-serif;
+            background: linear-gradient(135deg, #8b2635 0%, #c0392b 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            height: calc(100vh - 80px);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #a93226 0%, #e74c3c 100%);
+            color: white;
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .panel-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Patient Information Panel */
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c4f9b;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d0d7e8;
+            border-radius: 6px;
+            font-family: "Manrope", "Segoe UI", Tahoma, sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        /* Query Panel */
+        .dp-selector {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #f8f9fc;
+            border-radius: 8px;
+            border: 1px solid #e0e7ff;
+        }
+
+        .dp-selector label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #2c4f9b;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .dp-selector select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d0d7e8;
+            border-radius: 6px;
+            font-family: "Manrope", "Segoe UI", Tahoma, sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .dp-list {
+            margin-bottom: 20px;
+        }
+
+        .dp-list-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c4f9b;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .dp-item {
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            background: #f8f9fc;
+            border-left: 4px solid #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #e0e7ff;
+        }
+
+        .dp-item:hover {
+            background: #eef0fd;
+            transform: translateX(4px);
+        }
+
+        .dp-item.selected {
+            background: #e0e7ff;
+            border-left-color: #764ba2;
+            font-weight: 600;
+        }
+
+        .dp-item-name {
+            font-weight: 600;
+            color: #2c4f9b;
+            font-size: 0.95rem;
+        }
+
+        .dp-item-meta {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .query-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .query-actions button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f0f1f7;
+            color: #667eea;
+            border: 1px solid #d0d7e8;
+        }
+
+        .btn-secondary:hover {
+            background: #e8eaf5;
+        }
+
+        .results-container {
+            padding: 16px;
+            background: #f8f9fc;
+            border-radius: 8px;
+            border: 1px solid #e0e7ff;
+            overflow-y: auto;
+        }
+
+        /* Category cards */
+        .category-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .category-card {
+            padding: 18px 20px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            user-select: none;
+        }
+
+        .category-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        }
+
+        .category-card:active { transform: translateY(0); }
+
+        .category-card.loading {
+            opacity: 0.65;
+            pointer-events: none;
+        }
+
+        .cat-risk {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe4e4 100%);
+            border-color: #e74c3c;
+        }
+        .cat-risk:hover { border-color: #c0392b; }
+
+        .cat-treatment {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e4ecff 100%);
+            border-color: #667eea;
+        }
+        .cat-treatment:hover { border-color: #4a5fd6; }
+
+        .cat-unique {
+            background: linear-gradient(135deg, #f0fdf6 0%, #dcfce9 100%);
+            border-color: #22c55e;
+        }
+        .cat-unique:hover { border-color: #16a34a; }
+
+        .category-card-icon {
+            font-size: 2.2rem;
+            min-width: 46px;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .category-card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .cat-risk .category-card-title  { color: #c0392b; }
+        .cat-treatment .category-card-title { color: #2c4f9b; }
+        .cat-unique .category-card-title  { color: #15803d; }
+
+        .category-card-desc {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .utility-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            justify-content: flex-end;
+        }
+
+        .btn-utility {
+            padding: 7px 14px;
+            border: 1px solid #d0d7e8;
+            border-radius: 6px;
+            background: #f0f1f7;
+            color: #555;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+
+        .btn-utility:hover { background: #e8eaf5; color: #333; }
+        .btn-utility:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .results-category-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .results-title {
+            font-weight: 600;
+            color: #2c4f9b;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .result-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            font-size: 0.9rem;
+        }
+
+        .result-query {
+            font-weight: 600;
+            color: #2c4f9b;
+            margin-bottom: 4px;
+        }
+
+        .result-answer {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            background: #f0f0f0;
+        }
+
+        .result-definitive {
+            background: #e9e9e9 !important;
+            color: #333 !important;
+        }
+
+        .result-maybe {
+            background: #fff3cd !important;
+            color: #856404 !important;
+        }
+
+        .result-item--primary {
+            padding: 18px;
+            border-left-width: 5px;
+        }
+
+        .multi-result-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .multi-result-pill {
+            background: #e8f0fe;
+            color: #2c4f9b;
+            border-radius: 16px;
+            padding: 5px 14px;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .multi-result-none {
+            color: #888;
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-top: 6px;
+        }
+
+        .result-item--primary .result-query {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .result-item--primary .result-answer {
+            font-size: 1.35rem;
+            font-weight: 700;
+            padding: 12px 16px;
+        }
+
+        .dp-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e7ff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dp-item:hover {
+            border-color: #a93226;
+            box-shadow: 0 2px 8px rgba(169, 50, 38, 0.1);
+        }
+
+        .dp-item.active {
+            border-color: #a93226;
+            background: #fef2f2;
+            box-shadow: 0 2px 8px rgba(169, 50, 38, 0.2);
+        }
+
+        .dp-item-name {
+            font-weight: 600;
+            color: #2c4f9b;
+            margin-bottom: 4px;
+        }
+
+        .dp-item-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .dp-item-meta div {
+            margin-bottom: 2px;
+        }
+        
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d0d7e8;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b0b7c8;
+        }
+
+        /* ── Tell-us-more section ── */
+        .tell-more { margin-top: 10px; }
+
+        .tell-more-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 7px 12px;
+            background: #fffbeb;
+            border: 1px solid #f0c040;
+            border-radius: 6px;
+            color: #856404;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .tell-more-toggle:hover { background: #fef3c7; }
+        .tell-more-toggle.open { border-radius: 6px 6px 0 0; }
+
+        .tell-more-arrow {
+            font-size: 0.65rem;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .tell-more-toggle.open .tell-more-arrow { transform: rotate(90deg); }
+
+        .tell-more-body {
+            padding: 10px 12px;
+            background: #fffbeb;
+            border: 1px solid #f0c040;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+        }
+
+        .tell-more-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .tell-more-question {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+
+        .tell-more-label {
+            flex: 1;
+            color: #444;
+            text-transform: capitalize;
+        }
+
+        .tell-more-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+
+        .fact-btn {
+            padding: 3px 10px;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            background: white;
+            color: #333;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .fact-btn:hover { filter: brightness(0.93); }
+
+        .fact-btn.active-yes {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+            font-weight: 600;
+        }
+        .fact-btn.active-no {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+            font-weight: 600;
+        }
+        .fact-btn.active-unknown {
+            background: #e9e9e9;
+            border-color: #aaa;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .fact-btn-skip { color: #aaa; }
+
+        .fact-btn-link {
+            border-color: #667eea;
+            color: #2c4f9b;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+        }
+        .fact-btn-link:hover { background: #eef0fd; }
+        .fact-btn-link:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .tell-more-rerun {
+            margin-top: 10px;
+            width: 100%;
+            padding: 6px;
+            background: #856404;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .tell-more-rerun:hover { background: #6d5103; }
+        .tell-more-rerun:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .error-detail {
+            margin-top: 5px;
+            padding: 6px 10px;
+            background: #fff3cd;
+            border-left: 3px solid #f0a500;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            color: #5a4000;
+        }
+        .unknown-facts-hint {
+            margin-top: 4px;
+            font-size: 0.8rem;
+            color: #777;
+        }
+
+        .results-section-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: #aaa;
+            margin: 18px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e0e7ff;
+        }
+
+        .prescreen-panel {
+            padding: 18px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e7ff;
+        }
+
+        .prescreen-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2c4f9b;
+            margin-bottom: 14px;
+        }
+
+        .prescreen-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .prescreen-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 0.92rem;
+            color: #333;
+        }
+
+        .prescreen-item input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        /* ── Solution trace (DP linkage) ── */
+        .solution-trace {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: #f0f4ff;
+            border-radius: 6px;
+            border: 1px solid #c4cfee;
+        }
+
+        .solution-trace-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #2c4f9b;
+            margin-bottom: 8px;
+        }
+
+        .trace-step {
+            margin-bottom: 4px;
+            border-radius: 5px;
+            border: 1px solid #d8e0f4;
+            background: white;
+            overflow: hidden;
+        }
+
+        .trace-step-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+
+        .trace-step-header:hover { background: #eef1fc; }
+
+        .trace-step-toggle {
+            font-size: 0.65rem;
+            color: #667eea;
+            transition: transform 0.2s;
+            min-width: 10px;
+        }
+
+        .trace-step.expanded .trace-step-toggle { transform: rotate(90deg); }
+
+        .trace-step-number {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            font-size: 0.68rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .trace-summary {
+            font-size: 0.82rem;
+            color: #333;
+            flex: 1;
+        }
+
+        .trace-summary strong { color: #2c4f9b; }
+
+        .trace-step-content {
+            display: none;
+            padding: 6px 10px 8px 36px;
+            font-size: 0.8rem;
+            color: #555;
+            border-top: 1px solid #e8ecf8;
+            background: #f8f9fe;
+        }
+
+        .trace-step.expanded .trace-step-content { display: block; }
+
+        .trace-updated {
+            font-size: 0.8rem;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        .result-explanation {
+            font-size: 0.85rem;
+            color: #444;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        .result-explanation .factor {
+            font-weight: 700;
+            color: #2c4f9b;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .panel {
+                min-height: 500px;
+            }
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #a93226 0%, #e74c3c 100%);
+            padding: 22px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: #ffffff;
+            white-space: nowrap;
+        }
+
+        .page-footer {
+            text-align: center;
+            padding: 14px 32px;
+            width: 100%;
+        }
+
+        .page-footer-box {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 0.82rem;
+            color: #fff;
+        }
+
+        .page-footer-box a {
+            color: #fff;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .page-footer-box a:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1 class="page-title">ESC Guidelines: AI-CVD-PREVENT</h1>
+    </div>
+    <div class="container">
+        <!-- Left Panel: Patient Information -->
+        <div class="panel">
+            <div class="panel-header">
+                <h1>Patient Information</h1>
+                <p>Enter relevant medical data</p>
+            </div>
+            <div class="panel-content">
+                <!-- Demographic Section -->
+                <div class="form-section">
+                    <div class="form-section-title">Demographics</div>
+                    
+                    <div class="form-group">
+                        <label for="patientName">Patient Name</label>
+                        <input type="text" id="patientName" placeholder="Enter patient name">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="patientAge">Age</label>
+                            <input type="number" id="patientAge" min="0" max="150" placeholder="Years">
+                        </div>
+                        <div class="form-group">
+                            <label for="patientSex">Sex</label>
+                            <select id="patientSex">
+                                <option value="">Select</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medical History Section -->
+                <div class="form-section">
+                    <div class="form-section-title">Medical History</div>
+
+                    <div class="form-group">
+                        <label>Relevant Conditions</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cond-diabetes-t1" value="diabetes_t1">
+                                <label for="cond-diabetes-t1">Type 1 Diabetes</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cond-diabetes-t2" value="diabetes_t2">
+                                <label for="cond-diabetes-t2">Type 2 Diabetes</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cond-hypertension" value="hypertension">
+                                <label for="cond-hypertension">Hypertension</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cond-smoking" value="smoking">
+                                <label for="cond-smoking">Smoking</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cond-obesity" value="obesity">
+                                <label for="cond-obesity">Obesity</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Additional Risk Factors</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="risk-family-history" value="family_history">
+                                <label for="risk-family-history">Family History</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="risk-lipids" value="raised_lipids">
+                                <label for="risk-lipids">High Cholesterol</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="risk-ckd" value="ckd">
+                                <label for="risk-ckd">Chronic Kidney Disease</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="risk-familial-hc" value="familial_hc">
+                                <label for="risk-familial-hc">Familial Hypercholesterolaemia</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="risk-well-controlled-dm" value="well_controlled_dm">
+                                <label for="risk-well-controlled-dm">Well-controlled, short-standing diabetes</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Disease History</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="hist-ascvd" value="established_ascvd">
+                                <label for="hist-ascvd">Prior heart attack / stroke / revascularization</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="hist-mental" value="mental_disorder">
+                                <label for="hist-mental">Mental health condition</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vital Signs Section -->
+                <div class="form-section">
+                    <div class="form-section-title">Vital Signs & Labs</div>
+
+                    <div id="bmi-row" class="form-row">
+                        <div class="form-group">
+                            <label for="bmi">BMI</label>
+                            <input type="number" id="bmi" step="0.1" placeholder="kg/m²">
+                        </div>
+                    </div>
+
+                    <div id="bp-row">
+                        <div id="bp-label" class="form-group" style="margin-bottom:8px;">
+                            <label style="color:#2c4f9b;font-size:0.85rem;font-weight:600;" id="bp-section-label">Enter blood pressure to check for hypertension</label>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bp-systolic">Systolic</label>
+                                <input type="number" id="bp-systolic" placeholder="mmHg">
+                            </div>
+                            <div class="form-group">
+                                <label for="bp-diastolic">Diastolic</label>
+                                <input type="number" id="bp-diastolic" placeholder="mmHg">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clinical Notes Section -->
+                <div class="form-section">
+                    <div class="form-section-title">Medical Notes</div>
+
+                    <div class="form-group">
+                        <label for="clinicalNotes">Additional Information</label>
+                        <textarea id="clinicalNotes" placeholder="Use specific medical terms, e.g.: heart failure, HFrEF, CKD, stroke, TIA, atrial fibrillation, ASCVD, coronary stenting, PCI, CABG, ACS, familial hypercholesterolaemia, major depression, peripheral artery disease, target organ damage" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Query Interface -->
+        <div class="panel">
+            <div class="panel-header">
+                <h1>Medical Decision Support</h1>
+                <p>Select a question to begin your assessment</p>
+            </div>
+            <div class="panel-content">
+                <!-- Category buttons -->
+                <div class="category-cards">
+                    <div class="category-card cat-risk" id="catRiskBtn">
+                        <div class="category-card-icon">❤️</div>
+                        <div>
+                            <div class="category-card-title">What's my risk?</div>
+                            <div class="category-card-desc">CVD risk assessment based on your medical profile</div>
+                        </div>
+                    </div>
+                    <div class="category-card cat-treatment" id="catTreatmentBtn">
+                        <div class="category-card-icon">💊</div>
+                        <div>
+                            <div class="category-card-title">What treatment is right for me?</div>
+                            <div class="category-card-desc">LDL-C lowering · Treatment intensification · Mental health support · Antithrombotic therapy · Hypertension</div>
+                        </div>
+                    </div>
+                    <div class="category-card cat-unique" id="catUniqueBtn">
+                        <div class="category-card-icon">🔍</div>
+                        <div>
+                            <div class="category-card-title">Additional Recommendations</div>
+                            <div class="category-card-desc">Check and see which other factors may affect your treatment options</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Utility bar -->
+                <div class="utility-bar">
+                    <button class="btn-utility" id="clearPatientBtn">Clear Data</button>
+                </div>
+
+                <!-- Results Container -->
+                <div class="results-container">
+                    <div class="results-title" id="resultsTitle">Query Results</div>
+                    <div id="resultsContainer">
+                        <div class="empty-state">
+                            <p>Select a category above to begin</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-footer">
+        <span class="page-footer-box">Based on: <a href="https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/cvd-prevention-guidelines/" target="_blank">2021 ESC Guidelines on Cardiovascular Disease Prevention in Clinical Practice</a></span>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        const apiBase = '/api';
+        let allRequests = [];
+        let cachedRiskFacts = null; // populated when Risk Level is run; reused by treatment/unique DPs
+
+        // DOM elements
+        const catRiskBtnEl       = document.getElementById('catRiskBtn');
+        const catTreatmentBtnEl  = document.getElementById('catTreatmentBtn');
+        const catUniqueBtnEl     = document.getElementById('catUniqueBtn');
+        const clearPatientBtnEl  = document.getElementById('clearPatientBtn');
+        const resultsContainerEl = document.getElementById('resultsContainer');
+        const resultsTitleEl     = document.getElementById('resultsTitle');
+
+        // Patient form elements
+        const patientNameEl = document.getElementById('patientName');
+        const patientAgeEl  = document.getElementById('patientAge');
+        const patientSexEl  = document.getElementById('patientSex');
+        const clinicalNotesEl = document.getElementById('clinicalNotes');
+        const conditionCheckboxes = document.querySelectorAll('input[type="checkbox"][id^="cond-"]');
+
+        // ── Category mapping (hardcoded) ─────────────────────────────────────
+        const DP_CATEGORY_MAP = {
+            'cvd risk assessment':                          'risk',
+            'cvd risk estimation method':                   'risk',
+            'risk level':                                   'risk',
+            'hypertension treatment':                       'treatment',
+            'dyslipidaemias in diabetes mellitus':          'treatment',
+            'pharmacological ldl-c lowering':               'treatment',
+            'ldl-cholesterol treatment intensification':    'treatment',
+            'antithrombotic therapy':                       'treatment',
+            'mental health support in cvd risk management': 'treatment',
+            'diagnosis of hypertension':                    'treatment',
+            'lower extremity arterial disease':             'unique',
+            'coronary heart disease':                       'unique',
+            'diabetes mellitus':                            'unique',
+            'diabetes metellus':                            'unique',
+            'heart failure':                                'unique',
+            'cerebrovascular disease':                      'unique',
+        };
+
+        function getDpCategory(name) {
+            return DP_CATEGORY_MAP[(name || '').toLowerCase().trim()] || 'unique';
+        }
+
+        const CATEGORY_META = {
+            risk:      { label: "What's my risk?",                  icon: '❤️' },
+            treatment: { label: 'What treatment is right for me?',  icon: '💊' },
+            unique:    { label: 'What might make my case unique?',  icon: '🔍' }
+        };
+
+        // ── Data loading ─────────────────────────────────────────────────────
+        async function loadStoredRequests() {
+            try {
+                // Always sync from main on load: initializes on first visit,
+                // resets all fact values to unknown on every subsequent visit.
+                await fetch(`${apiBase}/clinical/import-from-main`, { method: 'POST' });
+                const response = await fetch(`${apiBase}/clinical/stored-requests`);
+                if (response.ok) {
+                    allRequests = await response.json();
+                }
+            } catch (error) {
+                console.error('Error initializing clinical decision problems:', error);
+            }
+        }
+
+        // ── Category button handlers ─────────────────────────────────────────
+        catRiskBtnEl.addEventListener('click',      () => runCategory('risk',      catRiskBtnEl));
+        catTreatmentBtnEl.addEventListener('click', () => runCategory('treatment', catTreatmentBtnEl));
+        catUniqueBtnEl.addEventListener('click',    () => runCategory('unique',    catUniqueBtnEl));
+
+        async function runCategory(category, buttonEl) {
+            const matching = allRequests.filter(r => getDpCategory(r.name) === category);
+
+            const meta = CATEGORY_META[category];
+            resultsTitleEl.textContent = meta.icon + ' ' + meta.label;
+
+            if (matching.length === 0) {
+                resultsContainerEl.innerHTML = `
+                    <div class="empty-state">
+                        <p>No decision problems found for this category.<br>
+                        The page will auto-import on next reload, or refresh now.</p>
+                    </div>`;
+                return;
+            }
+
+            // "Unique" category: show a pre-screen checkbox list first
+            if (category === 'unique') {
+                showUniquePrescreen(matching);
+                return;
+            }
+
+            const patientData = gatherPatientData();
+
+            // For treatment: only show DPs relevant to the patient's conditions
+            const toRun = category === 'treatment'
+                ? matching.filter(dp => shouldShowTreatmentDp(dp, patientData))
+                : matching;
+
+            if (toRun.length === 0) {
+                resultsContainerEl.innerHTML = `
+                    <div class="empty-state">
+                        <p>No specific treatment guidance based on current patient information.<br>
+                        Try filling in conditions like Hypertension, Diabetes, or High Cholesterol.</p>
+                    </div>`;
+                return;
+            }
+
+            buttonEl.classList.add('loading');
+            resultsContainerEl.innerHTML = toRun.map(dp => {
+                const cls = (dp.name || '').toLowerCase().trim() === 'risk level'
+                    ? 'result-item result-item--primary' : 'result-item';
+                return `<div class="${cls}" id="dp-result-${dp.id}">
+                    <div class="result-query">${escapeHtml(dp.name)}</div>
+                    <div class="result-answer">⏳ Analyzing…</div>
+                </div>`;
+            }).join('');
+
+            const settled = await Promise.allSettled(toRun.map(dp => runDp(dp, patientData)));
+
+            // Cache Risk Level result so treatment/unique DPs can resolve CVD risk facts
+            if (category === 'risk') {
+                const rlIdx = toRun.findIndex(dp => dp.name.toLowerCase().trim() === 'risk level');
+                if (rlIdx >= 0 && settled[rlIdx].status === 'fulfilled') {
+                    const rlResult = settled[rlIdx].value;
+                    if (!rlResult.hasError && rlResult.cognicaPrediction) {
+                        cachedRiskFacts = riskPredToFacts(rlResult.cognicaPrediction);
+                        try { localStorage.setItem('cognica_risk_facts', JSON.stringify(cachedRiskFacts)); } catch {}
+                    }
+                }
+            }
+
+            resultsContainerEl.innerHTML = '';
+
+            if (category === 'risk') {
+                // Show "Risk Level" first, then the rest under a separator
+                const riskIdx = toRun.findIndex(dp => dp.name.toLowerCase().trim() === 'risk level');
+                if (riskIdx >= 0) {
+                    resultsContainerEl.appendChild(buildResultCard(toRun[riskIdx], settled[riskIdx], patientData));
+                    const sep = document.createElement('div');
+                    sep.className = 'results-section-label';
+                    sep.textContent = 'Additional Information';
+                    resultsContainerEl.appendChild(sep);
+                    settled.forEach((outcome, i) => {
+                        if (i !== riskIdx) resultsContainerEl.appendChild(buildResultCard(toRun[i], outcome, patientData));
+                    });
+                } else {
+                    settled.forEach((outcome, i) => resultsContainerEl.appendChild(buildResultCard(toRun[i], outcome, patientData)));
+                }
+            } else {
+                settled.forEach((outcome, i) => resultsContainerEl.appendChild(buildResultCard(toRun[i], outcome, patientData)));
+            }
+
+            buttonEl.classList.remove('loading');
+            attachTraceHandlers();
+            attachTellMoreHandlers();
+        }
+
+        // Returns true if a treatment DP is relevant given the patient's current data.
+        function shouldShowTreatmentDp(dp, pd) {
+            const name = dp.name.toLowerCase().trim();
+            const hasHypertension = pd.conditions.includes('hypertension') ||
+                (pd.bpSystolic  !== null && pd.bpSystolic  >= 140) ||
+                (pd.bpDiastolic !== null && pd.bpDiastolic >= 90);
+            const hasDiabetes        = pd.conditions.includes('diabetes_t1') || pd.conditions.includes('diabetes_t2')
+                || (pd.notesFlags && (pd.notesFlags.has('diabetes_t2') || pd.notesFlags.has('diabetes_t1') || pd.notesFlags.has('diabetes')));
+            const hasHighCholesterol = (pd.riskFactors || []).includes('raised_lipids');
+            const hasMental          = (pd.history     || []).includes('mental_disorder');
+
+            const hasASCVD = (pd.history || []).includes('established_ascvd')
+                || (pd.notesFlags && pd.notesFlags.has('established_ascvd'));
+            if (name === 'antithrombotic therapy')                       return hasASCVD;
+            if (name === 'hypertension treatment')                       return hasHypertension;
+            if (name === 'diagnosis of hypertension')                    return hasHypertension;
+            if (name === 'dyslipidaemias in diabetes mellitus')          return hasDiabetes;
+            if (name === 'pharmacological ldl-c lowering')               return false;
+            if (name === 'ldl-cholesterol treatment intensification')    return hasHighCholesterol;
+            if (name === 'mental health support in cvd risk management') return hasMental;
+            return true;
+        }
+
+        function showUniquePrescreen(dps) {
+            const pd = gatherPatientData();
+            const hasDiabetes = pd.conditions.includes('diabetes_t1') || pd.conditions.includes('diabetes_t2')
+                || (pd.notesFlags && (pd.notesFlags.has('diabetes_t1') || pd.notesFlags.has('diabetes_t2') || pd.notesFlags.has('diabetes')));
+
+            const items = dps.map(dp => {
+                const isDiabetesDp = /^diabetes\s+(mellitus|metellus)$/i.test(dp.name.trim());
+                const checked = hasDiabetes && isDiabetesDp ? 'checked' : '';
+                return `
+                <label class="prescreen-item">
+                    <input type="checkbox" class="prescreen-cb" value="${dp.id}" ${checked}>
+                    <span>${escapeHtml(dp.name)}</span>
+                </label>`;
+            }).join('');
+
+            resultsContainerEl.innerHTML = `
+                <div class="prescreen-panel">
+                    <div class="prescreen-title">Do you have any of the following?</div>
+                    <div class="prescreen-items">${items}</div>
+                    <button class="btn-primary prescreen-run-btn">Show assessments</button>
+                </div>`;
+
+            resultsContainerEl.querySelector('.prescreen-run-btn').addEventListener('click', async function() {
+                const selected = Array.from(resultsContainerEl.querySelectorAll('.prescreen-cb:checked'))
+                    .map(cb => parseInt(cb.value));
+                if (selected.length === 0) return;
+
+                const selectedDps = dps.filter(dp => selected.includes(dp.id));
+                this.disabled = true;
+                this.textContent = 'Analyzing…';
+
+                const patientData = gatherPatientData();
+                const settled = await Promise.allSettled(selectedDps.map(dp => runDp(dp, patientData)));
+
+                resultsContainerEl.innerHTML = '';
+                settled.forEach((outcome, i) => resultsContainerEl.appendChild(buildResultCard(selectedDps[i], outcome, patientData)));
+                attachTraceHandlers();
+                attachTellMoreHandlers();
+            });
+        }
+
+        async function runSingleDp(dp, patientData, queryOverride) {
+            const complementaryOptions = safeParseJson(dp.complementaryOptionsJson, []);
+            const policy = dp.policyInCognicaDPCNL || '';
+            const query  = queryOverride !== undefined
+                ? queryOverride
+                : (dp.query || pickByPriority(dp.name, complementaryOptions) || complementaryOptions[0] || '');
+
+            // For each fact in the DP's template, try to evaluate it true/false
+            // from the patient form. Facts we can't determine stay unknown.
+            const dpFacts = safeParseJson(dp.factsJson, []);
+            const facts = dpFacts.length > 0
+                ? supplementWithResolvers(evaluateDpFacts(dpFacts, patientData, dp.name), dp.name, patientData)
+                : patientDataToFacts(patientData); // fallback for fact-free DPs
+
+            // Trim all fact names — safety net for DB entries with leading/trailing spaces.
+            const trimmedFacts = facts.map(f => ({ ...f, fact: (f.fact || '').trim() }));
+            const knownFacts = trimmedFacts.filter(f => f.factStatus !== 'unknown');
+            console.log(`[DP] "${dp.name}" → sending ${trimmedFacts.length} facts (${knownFacts.length} resolved):`,
+                knownFacts.map(f => `${f.fact}=${f.factStatus}`));
+
+            const response = await fetch(`${apiBase}/predict`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actionType: 'getPrediction',
+                    policyInCognicaDPCNL: policy,
+                    query: query,
+                    complementaryOptions: complementaryOptions,
+                    facts: trimmedFacts
+                })
+            });
+
+            if (!response.ok) {
+                const errBody = await response.text().catch(() => '');
+                console.error(`[DP] "${dp.name}" HTTP ${response.status}`, errBody);
+                console.error(`[DP] "${dp.name}" REQUEST BODY:`, JSON.stringify({
+                    actionType: 'getPrediction',
+                    policyInCognicaDPCNL: policy,
+                    query: query,
+                    complementaryOptions: complementaryOptions,
+                    facts: trimmedFacts
+                }, null, 2));
+                throw new Error(`HTTP ${response.status}: ${errBody}`);
+            }
+            const data = await response.json();
+            if (data.hasError) {
+                console.warn(`[DP] "${dp.name}" hasError=true, query="${query}", policy snippet="${policy.slice(0,120)}"`);
+                console.warn(`[DP] "${dp.name}" full policy:`, policy);
+                console.warn(`[DP] "${dp.name}" facts sent:`, JSON.stringify(trimmedFacts));
+            }
+            return { ...data, evaluatedFacts: trimmedFacts };
+        }
+
+        // Runs every complementary option independently and collects all YES results.
+        async function runNonComplementaryDp(dp, patientData) {
+            const options = safeParseJson(dp.complementaryOptionsJson, []);
+            if (options.length === 0) return { isMultiResult: true, yesItems: [] };
+
+            const results = await Promise.allSettled(
+                options.map(opt => runSingleDp(dp, patientData, opt))
+            );
+
+            const yesItems = [];
+            let evaluatedFacts = [];
+            results.forEach((outcome, i) => {
+                if (outcome.status !== 'fulfilled' || outcome.value.hasError) return;
+                if (evaluatedFacts.length === 0 && outcome.value.evaluatedFacts?.length > 0)
+                    evaluatedFacts = outcome.value.evaluatedFacts;
+                const pred = (outcome.value.cognicaPrediction || '').trim().toUpperCase();
+                if (pred.startsWith('YES')) {
+                    const key = (options[i] || '').toLowerCase().trim();
+                    yesItems.push({
+                        key,
+                        label:       CONCLUSION_LABELS[key] || options[i].replace(/[-_]/g, ' '),
+                        explanation: outcome.value.cognicaSummaryExplanation || '',
+                    });
+                }
+            });
+
+            return { isMultiResult: true, yesItems, evaluatedFacts };
+        }
+
+        // For complementary DPs with a priority list, waterfall through options:
+        // return the first YES; if none, return the highest-priority MAYBE; if none, the last result.
+        // Exploits COGNICA's mutual-exclusivity guarantee — a YES on one option means NO on all others.
+        async function runComplementaryDp(dp, patientData) {
+            const name     = (dp.name || '').toLowerCase().trim();
+            const priority = DP_CONCLUSION_PRIORITY[name];
+            const options  = safeParseJson(dp.complementaryOptionsJson, []);
+            const normed   = options.map(o => (o || '').toLowerCase().trim().replace(/\s+/g, '_'));
+
+            let firstMaybe = null;
+            let lastResult = null;
+
+            for (const query of priority) {
+                if (!normed.includes(query)) continue;
+                const result = await runSingleDp(dp, patientData, query);
+                if (result.hasError) return result;
+                lastResult = result;
+                const pred = (result.cognicaPrediction || '').trim().toUpperCase();
+                if (pred.startsWith('YES'))   return result;
+                if (pred.startsWith('MAYBE') && !firstMaybe) firstMaybe = result;
+            }
+
+            return firstMaybe || lastResult || runSingleDp(dp, patientData);
+        }
+
+        function runDp(dp, patientData) {
+            const name = (dp.name || '').toLowerCase().trim();
+            if (NON_COMPLEMENTARY_DPS.has(name))   return runNonComplementaryDp(dp, patientData);
+            if (DP_CONCLUSION_PRIORITY[name])       return runComplementaryDp(dp, patientData);
+            return runSingleDp(dp, patientData);
+        }
+
+        function buildResultCard(dp, outcome, patientData) {
+            const card = document.createElement('div');
+            const isPrimary = (dp.name || '').toLowerCase().trim() === 'risk level';
+            card.className = isPrimary ? 'result-item result-item--primary' : 'result-item';
+            card.id = `card-${dp.id}`;
+
+            if (outcome.status === 'rejected') {
+                card.innerHTML = `
+                    <div class="result-query">${escapeHtml(dp.name)}</div>
+                    <div class="result-answer">⚠️ Error</div>
+                    <div class="result-explanation">${escapeHtml(outcome.reason?.message || 'Unknown error')}</div>`;
+                return card;
+            }
+
+            const data = outcome.value;
+
+            if (data.isMultiResult) {
+                const pills = data.yesItems.length > 0
+                    ? data.yesItems.map(it => `
+                        <div class="multi-result-list">
+                            <span class="multi-result-pill">${escapeHtml(it.label)}</span>
+                        </div>
+                        ${it.explanation ? `<div class="result-explanation">${formatExplanation(it.explanation)}</div>` : ''}`
+                    ).join('')
+                    : `<div class="multi-result-none">No specific recommendations based on current patient data.</div>`
+                      + buildTellUsMore(dp, data.evaluatedFacts || []);
+                const answerLabel = data.yesItems.length > 0 ? 'Recommendations' : 'No Recommendations';
+                const answerCls   = data.yesItems.length > 0 ? 'result-definitive' : 'result-maybe';
+                card.innerHTML = `
+                    <div class="result-query">${escapeHtml(dp.name)}</div>
+                    <div class="result-answer ${answerCls}"><strong>${answerLabel}</strong></div>
+                    ${pills}`;
+                return card;
+            }
+
+            if (data.hasError) {
+                const evaluatedFacts = data.evaluatedFacts || [];
+                const tellMore = buildTellUsMore(dp, evaluatedFacts);
+                const errMsg = data.errorMessage
+                    ? `<div class="error-detail">${formatExplanation(data.errorMessage)}</div>`
+                    : '';
+                const unknownCount = evaluatedFacts.filter(f => f.factStatus === 'unknown').length;
+                const hint = unknownCount > 0
+                    ? `<div class="unknown-facts-hint">${unknownCount} factor${unknownCount > 1 ? 's' : ''} unknown — answer them below to refine the result.</div>`
+                    : `<div class="unknown-facts-hint">Try adding more information in the Patient Information panel.</div>`;
+                card.innerHTML = `
+                    <div class="result-query">${escapeHtml(dp.name)}</div>
+                    <div class="result-answer result-maybe">MAYBE</div>
+                    ${errMsg}
+                    ${hint}
+                    ${tellMore}`;
+                return card;
+            }
+
+            // Normalize prediction: engine may return "MAYBE: Both conclusions..." etc.
+            const rawPrediction  = (data.cognicaPrediction || 'UNKNOWN').trim();
+            const predUpper      = rawPrediction.toUpperCase();
+            const prediction     = predUpper.startsWith('YES')   ? 'YES'
+                                 : predUpper.startsWith('NO')    ? 'NO'
+                                 : predUpper.startsWith('MAYBE') ? 'MAYBE'
+                                 : rawPrediction;
+            const explanation    = data.cognicaSummaryExplanation || '';
+            const steps          = data.autoResolutionSteps || [];
+            const evaluatedFacts = data.evaluatedFacts || [];
+
+            const answerClass = prediction === 'MAYBE' ? 'result-maybe'
+                              : prediction !== '' && prediction !== 'UNKNOWN' ? 'result-definitive' : '';
+
+            const tellMore = prediction === 'MAYBE'
+                ? buildTellUsMore(dp, evaluatedFacts) : '';
+
+            const concl = extractConclusion(explanation, dp, prediction);
+            card.innerHTML = `
+                <div class="result-query">${escapeHtml(dp.name)}</div>
+                <div class="result-answer ${answerClass}"><strong>${escapeHtml(concl.label)}</strong></div>
+                ${explanation ? `<div class="result-explanation">${formatExplanation(explanation)}${concl.priorityNote ? ' ' + escapeHtml(concl.priorityNote) : ''}</div>` : ''}
+                ${steps.length > 0 ? buildSolutionTrace(steps) : ''}
+                ${tellMore}`;
+
+            return card;
+        }
+
+        // Human-readable labels for Cognica conclusion identifiers.
+        // Keys are the exact complementaryOptions values lowercased.
+        const CONCLUSION_LABELS = {
+            // ── Risk Level ───────────────────────────────────────────────────
+            'very_high_risk':       'Very High Risk',
+            'high_risk':            'High Risk',
+            'moderate_risk':        'Moderate Risk',
+            'low_to_high_risk':     'Low to High Risk',
+            'low_to_very_high_risk':'Low to Very High Risk',
+            // ── CVD Risk Assessment ──────────────────────────────────────────
+            'perform_systematic_cvd_risk_assessment':        'Perform Systematic CVD Risk Assessment',
+            'do_not_perform_systematic_cvd_risk_assessment': 'No CVD Risk Assessment Needed',
+            // ── CVD Risk Estimation Method ───────────────────────────────────
+            'use_score2':                  'Use SCORE2',
+            'use_score2_op':               'Use SCORE2-OP',
+            'no_risk_estimation_required': 'No Risk Estimation Required',
+            // ── Dyslipidaemias in diabetes mellitus ──────────────────────────
+            'ldl_reduction_gte_50_percent_and_ldl_goal_gt_1_4_mmol_l': 'LDL ≥50% reduction + target <1.4 mmol/L',
+            'ldl_reduction_gte_50_percent_and_ldl_goal_gt_1_8_mmol_l': 'LDL ≥50% reduction + target <1.8 mmol/L',
+            // legacy keys kept for backward compatibility
+            'ldl_target_very_high_risk': 'LDL ≥50% reduction + target <1.4 mmol/L',
+            'ldl_target_high_risk':      'LDL ≥50% reduction + target <1.8 mmol/L',
+            // ── LDL-Cholesterol Treatment Intensification ────────────────────
+            'use_stepwise_ldl_treatment': 'Use Stepwise LDL Treatment',
+            'no_stepwise_ldl_treatment':  'No Stepwise LDL Treatment',
+            // ── Pharmacological LDL-C Lowering ───────────────────────────────
+            'prescribe_high_intensity_statin': 'High-Intensity Statin',
+            'prescribe_low_intensity_statin':  'Low-Intensity Statin',
+            'do_not_prescribe_statin':         'No Statin Indicated',
+            'add_ezetimibe':                   'Add Ezetimibe',
+            'add_pcsk9_inhibitor':             'Add PCSK9 Inhibitor',
+            // ── Antithrombotic Therapy ───────────────────────────────────────
+            'aspirin':                  'Aspirin',
+            'clopidogrel':              'Clopidogrel',
+            'proton_pump_inhibitor':    'Proton Pump Inhibitor',
+            // ── Cerebrovascular Disease ──────────────────────────────────────
+            'lifestyle_improvement':                  'Lifestyle Improvement',
+            'appropriate_pharmacological_management': 'Appropriate Pharmacological Management',
+            'antiplatelet_therapy':                   'Antiplatelet Therapy',
+            'anticoagulant_therapy':                  'Anticoagulant Therapy',
+            'dipyridamole':                           'Dipyridamole',
+            'bp_lowering':                            'BP Lowering',
+            // ── Coronary Heart Disease ───────────────────────────────────────
+            'p2y12_inhibitor':      'P2Y12 Inhibitor',
+            'ace_inhibitor_or_arb': 'ACE Inhibitor / ARB',
+            'beta_blocker':         'Beta Blocker',
+            // ── Heart Failure ────────────────────────────────────────────────
+            'comprehensive_cardiac_rehabilitation_programme': 'Comprehensive Cardiac Rehabilitation',
+            'exercise_based_cardiac_rehabilitation':          'Exercise-Based Cardiac Rehabilitation',
+            'screen_for_comorbidities':                       'Screen for Comorbidities',
+            'ace_inhibitor':                        'ACE Inhibitor',
+            'mineralocorticoid_receptor_antagonist':'Mineralocorticoid Receptor Antagonist',
+            'sacubitril_valsartan':                 'Sacubitril/Valsartan',
+            'angiotensin_receptor_blocker':         'Angiotensin Receptor Blocker',
+            'dapagliflozin':                        'Dapagliflozin',
+            'empagliflozin':                        'Empagliflozin',
+            'diuretics':                            'Diuretics',
+            // ── Hypertension Treatment ───────────────────────────────────────
+            'perform_repeated_office_bp_measurements': 'Repeated Office BP Measurements',
+            'perform_abpm_or_hbpm':                    'ABPM or HBPM',
+            'measure_serum_creatinine':                'Measure Serum Creatinine',
+            'measure_egfr':                            'Measure eGFR',
+            'measure_electrolytes':                    'Measure Electrolytes',
+            'measure_acr':                             'Measure ACR',
+            'perform_12_lead_ecg':                     '12-Lead ECG',
+            'perform_echocardiography':                'Echocardiography',
+            'perform_fundoscopy_or_retinal_imaging':   'Fundoscopy / Retinal Imaging',
+            'initiate_drug_treatment':                 'Initiate Drug Treatment',
+            'lifestyle_interventions':                 'Lifestyle Interventions',
+            'initiate_two_drug_combination':           'Two-Drug Combination',
+            'ras_blocker_plus_ccb':                    'RAS Blocker + CCB',
+            'ras_blocker_plus_diuretic':               'RAS Blocker + Diuretic',
+            'increase_to_three_drug_combination':      'Three-Drug Combination',
+            'add_spironolactone':                      'Add Spironolactone',
+            'add_alternative_fourth_line_agent':       'Fourth-Line Agent',
+            // ── Lower Extremity Arterial Disease ─────────────────────────────
+            'smoking_cessation':                    'Smoking Cessation',
+            'healthy_diet':                         'Healthy Diet',
+            'physical_activity':                    'Physical Activity',
+            'healthy_diet_and_physical_activity':   'Healthy Diet & Physical Activity',
+            'non-supervised_exercise_training':     'Non-Supervised Exercise Training',
+            'non_supervised_exercise_training':     'Non-Supervised Exercise Training',
+            'supervised_exercise_training':         'Supervised Exercise Training',
+            'strict_glycaemic_control':             'Strict Glycaemic Control',
+            'control_bp':                           'Control BP',
+            'control_bp_lead':                      'Control BP',
+            // ── Mental Health Support ────────────────────────────────────────
+            'provide_intensified_support':             'Provide Intensified Support',
+            'provide_evidence_based_mental_healthcare':'Provide Evidence-Based Mental Healthcare',
+            'use_ssri_snri_tca':                       'SSRI / SNRI / TCA',
+            // ── Diabetes Mellitus ────────────────────────────────────────────
+            'low_saturated_fat_high_fibre_diet': 'Low Saturated Fat / High Fibre Diet',
+            'aerobic_physical_activity':         'Aerobic Physical Activity',
+            'strength_training':                 'Strength Training',
+            'reduction_in_energy_intake':        'Reduction in Energy Intake',
+            'hba1c_target_lt_7_percent':         'HbA1c Target <7%',
+            'hba1c_target_<7_percent':           'HbA1c Target <7%',
+            'metformin_first_line_therapy':      'Metformin First-Line Therapy',
+            'glp1_receptor_agonist':             'GLP-1 Receptor Agonist',
+            'sglt2_inhibitor':                   'SGLT2 Inhibitor',
+        };
+
+        // When Cognica returns MAYBE (two conclusions equally supported), pick the higher-priority one.
+        // Also used to select the initial query for multi-option DPs.
+        // Keys must match dp.name lowercased; values are ordered highest → lowest priority.
+        const DP_CONCLUSION_PRIORITY = {
+            'risk level': [
+                'very_high_risk',
+                'high_risk',
+                'moderate_risk',
+                'low_to_high_risk',
+                'low_to_very_high_risk',
+            ],
+            // cvd risk estimation method: resolved by given-fact detection, not priority
+            'dyslipidaemias in diabetes mellitus': [
+                'ldl_reduction_gte_50_percent_and_ldl_goal_gt_1_4_mmol_l',
+                'ldl_reduction_gte_50_percent_and_ldl_goal_gt_1_8_mmol_l',
+            ],
+            'pharmacological ldl-c lowering': [
+                'prescribe_high_intensity_statin',
+                'prescribe_low_intensity_statin',
+                'do_not_prescribe_statin',
+            ],
+            'lower extremity arterial disease': [
+                'healthy_diet_and_physical_activity',
+                'antiplatelet_therapy',
+                'smoking_cessation',
+                'supervised_exercise_training',
+                'non-supervised_exercise_training',
+                'control_bp',
+                'strict_glycaemic_control',
+            ],
+        };
+
+        // DPs where ALL options are independent recommendations (run every option, show all YES results).
+        const NON_COMPLEMENTARY_DPS = new Set([
+            'lower extremity arterial disease',
+            'heart failure',
+            'mental health support in cvd risk management',
+            'coronary heart disease',
+            'antithrombotic therapy',
+            'cerebrovascular disease',
+            'diabetes metellus',
+            'diabetes mellitus',
+            'hypertension treatment',
+        ]);
+
+        function pickByPriority(dpName, candidates) {
+            const priority = DP_CONCLUSION_PRIORITY[(dpName || '').toLowerCase().trim()];
+            if (!priority) return null;
+            const normed = (candidates || []).map(c => (c || '').toLowerCase().trim().replace(/\s+/g, '_'));
+            for (const p of priority) {
+                if (normed.includes(p)) return p;
+            }
+            return null;
+        }
+
+        // Fact names that represent the same concept — keep only the first seen per group.
+        const FACT_ALIAS_GROUPS = [
+            ['type_1_diabetes_mellitus', 'type 1 dm', 'type_1_dm'],
+            ['type_2_diabetes_mellitus', 'type 2 dm', 'type_2_dm'],
+        ];
+
+        function canonicalFactName(name) {
+            const n = (name || '').toLowerCase().trim().replace(/_/g, ' ');
+            for (const group of FACT_ALIAS_GROUPS) {
+                if (group.some(a => a.replace(/_/g, ' ') === n)) return group[0].replace(/_/g, ' ');
+            }
+            return n;
+        }
+
+        // Shows only unknown facts (true = already known, false = not relevant to ask about).
+        // Deduplicates aliased fact names (e.g. "type 1 DM" and "type_1_diabetes_mellitus").
+        function buildTellUsMore(dp, evaluatedFacts) {
+            const seen = new Set();
+            const display = (evaluatedFacts || []).filter(f => {
+                if (f.factStatus !== 'unknown') return false;
+                const canon = canonicalFactName(f.fact);
+                if (seen.has(canon)) return false;
+                seen.add(canon);
+                return true;
+            });
+            if (display.length === 0) return '';
+
+            const questions = display.map(f => {
+                const linked = findLinkedDp(f.fact, dp.name);
+                const linkedBtn = linked
+                    ? `<button class="fact-btn fact-btn-link" data-linked-dp-id="${linked.dp.id}" data-query-fact="${escapeHtml(f.fact)}">${linked.label} ↗</button>`
+                    : '';
+                return `
+                    <div class="tell-more-question" data-fact="${escapeHtml(f.fact)}">
+                        <span class="tell-more-label">${escapeHtml(f.fact.replace(/_/g, ' '))}</span>
+                        <div class="tell-more-btns">
+                            ${linkedBtn}
+                            <button class="fact-btn" data-value="true">Yes</button>
+                            <button class="fact-btn" data-value="false">No</button>
+                            <button class="fact-btn fact-btn-skip" data-value="unknown" title="Keep unknown">?</button>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            return `
+                <div class="tell-more">
+                    <button class="tell-more-toggle">
+                        Tell us more so we can refine the answer further
+                        <span class="tell-more-arrow">▶</span>
+                    </button>
+                    <div class="tell-more-body" hidden>
+                        <div class="tell-more-title">Which of these apply to this patient?</div>
+                        ${questions}
+                        <button class="tell-more-rerun" data-dp-id="${dp.id}">Update answer</button>
+                    </div>
+                </div>`;
+        }
+
+        // ── Patient data persistence (localStorage) ──────────────────────────
+        const PATIENT_STORAGE_KEY = 'cognica_patient_data';
+
+        function savePatientToStorage() {
+            const data = {
+                name:        patientNameEl.value,
+                age:         patientAgeEl.value,
+                sex:         patientSexEl.value,
+                notes:       clinicalNotesEl.value,
+                bmi:         document.getElementById('bmi').value,
+                bpSys:       document.getElementById('bp-systolic').value,
+                bpDia:       document.getElementById('bp-diastolic').value,
+                conditions:  Array.from(conditionCheckboxes)
+                                 .filter(cb => cb.checked).map(cb => cb.value),
+                riskFactors: Array.from(document.querySelectorAll('input[type="checkbox"][id^="risk-"]'))
+                                 .filter(cb => cb.checked).map(cb => cb.value),
+                history:     Array.from(document.querySelectorAll('input[type="checkbox"][id^="hist-"]'))
+                                 .filter(cb => cb.checked).map(cb => cb.value),
+            };
+            try { localStorage.setItem(PATIENT_STORAGE_KEY, JSON.stringify(data)); } catch {}
+        }
+
+        function restorePatientFromStorage() {
+            try {
+                const savedRisk = localStorage.getItem('cognica_risk_facts');
+                if (savedRisk) cachedRiskFacts = JSON.parse(savedRisk);
+            } catch {}
+            try {
+                const raw = localStorage.getItem(PATIENT_STORAGE_KEY);
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                patientNameEl.value   = data.name  || '';
+                patientAgeEl.value    = data.age   || '';
+                patientSexEl.value    = data.sex   || '';
+                clinicalNotesEl.value = data.notes || '';
+                document.getElementById('bmi').value          = data.bmi   || '';
+                document.getElementById('bp-systolic').value  = data.bpSys || '';
+                document.getElementById('bp-diastolic').value = data.bpDia || '';
+                conditionCheckboxes.forEach(cb => {
+                    cb.checked = (data.conditions  || []).includes(cb.value);
+                });
+                document.querySelectorAll('input[type="checkbox"][id^="risk-"]').forEach(cb => {
+                    cb.checked = (data.riskFactors || []).includes(cb.value);
+                });
+                document.querySelectorAll('input[type="checkbox"][id^="hist-"]').forEach(cb => {
+                    cb.checked = (data.history     || []).includes(cb.value);
+                });
+                syncBmiRow();
+                syncBpLabel();
+            } catch {}
+        }
+
+        // ── Utility button handlers ──────────────────────────────────────────
+        clearPatientBtnEl.addEventListener('click', () => {
+            patientNameEl.value = '';
+            patientAgeEl.value  = '';
+            patientSexEl.value  = '';
+            clinicalNotesEl.value = '';
+            conditionCheckboxes.forEach(cb => { cb.checked = false; });
+            document.querySelectorAll('input[type="checkbox"][id^="risk-"]').forEach(cb => { cb.checked = false; });
+            document.querySelectorAll('input[type="checkbox"][id^="hist-"]').forEach(cb => { cb.checked = false; });
+            ['bmi','bp-systolic','bp-diastolic'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            try { localStorage.removeItem(PATIENT_STORAGE_KEY); } catch {}
+            try { localStorage.removeItem('cognica_risk_facts'); } catch {}
+            cachedRiskFacts = null;
+            resultsTitleEl.textContent = 'Query Results';
+            resultsContainerEl.innerHTML = `<div class="empty-state"><p>Select a category above to begin</p></div>`;
+            syncBmiRow();
+            syncBpLabel();
+        });
+
+        // ── Notes keyword scanner ────────────────────────────────────────────
+        // Returns a Set of detected medical flags. Only adds positives;
+        // missing keyword ≠ absent condition, so callers return null (unknown),
+        // not false, when a flag is absent.
+        function parseNotesFlags(notes) {
+            const flags = new Set();
+            const t = (notes || '').toLowerCase();
+
+            if (/heart\s+failure/.test(t))                                    flags.add('heart_failure');
+            if (/hfref/.test(t))                                              flags.add('symptomatic_hfref');
+            if (/myocardial\s+infarct|heart\s+attack/.test(t))               flags.add('previous_myocardial_infarction');
+            if (/\bstroke\b/.test(t))                                         flags.add('stroke');
+            if (/\btia\b|transient\s+isch/.test(t))                          flags.add('tia');
+            if (/chronic\s+kidney\s+disease|\bckd\b/.test(t))                flags.add('ckd');
+            if (/peripheral\s+artery\s+disease|\bpad\b|\bclaudicat/.test(t)) flags.add('lead');
+            if (/atrial\s+fibril/.test(t))                                    flags.add('atrial_fibrillation');
+            if (/major\s+depression/.test(t))                                 flags.add('major_depression');
+            if (/coronary\s+stent|\bpci\b|\bcabg\b|bypass\s+graft/.test(t)) flags.add('coronary_stenting');
+            if (/acute\s+coronary|\bacs\b/.test(t))                          flags.add('acute_coronary_syndrome');
+            if (/chronic\s+coronary/.test(t))                                 flags.add('chronic_coronary_syndrome');
+            if (/familial\s+hyperchol/.test(t))                               flags.add('familial_hypercholesterolaemia');
+            if (/\bascvd\b/.test(t))                                          flags.add('established_ascvd');
+            if (/severe\s+(?:target\s+organ\s+damage|tod)/.test(t))          flags.add('severe_tod');
+            if (/target\s+organ\s+damage|\btod\b/.test(t))                   flags.add('tod');
+            if (/markedly\s+elevated\s+cholesterol|high\s+cholesterol|elevated\s+cholesterol|hypercholesterol/.test(t))
+                                                                              flags.add('markedly_elevated_cholesterol');
+            if (/\btype\s*2\s*(diabetes|dm)\b|\bt2\s*dm\b|\bt2dm\b/.test(t)) flags.add('diabetes_t2');
+            if (/\btype\s*1\s*(diabetes|dm)\b|\bt1\s*dm\b|\bt1dm\b/.test(t)) flags.add('diabetes_t1');
+            if (/\bdiabetes(?:\s+mellitus)?\b/.test(t))                       flags.add('diabetes');
+
+            // CKD severity
+            if (/severe\s+ckd|stage\s*[45]\s*ckd|ckd\s+(?:stage\s+)?[45]/.test(t)) flags.add('severe_ckd');
+            else if (/moderate\s+ckd|stage\s*[23]\s*ckd|ckd\s+(?:stage\s+)?[23]/.test(t)) flags.add('moderate_ckd');
+
+            // Vascular history details
+            if (/claudicat/.test(t))                                                flags.add('intermittent_claudication');
+            if (/cardioembolic\s+stroke|embolic\s+stroke/.test(t))                 flags.add('cardioembolic_stroke');
+            if (/cardioembolic\s+tia|embolic\s+tia/.test(t))                       flags.add('cardioembolic_tia');
+            if (/non[- ]cardioembolic\s+(?:ischaemic\s+)?stroke/.test(t))          flags.add('non_cardioembolic_ischaemic_stroke');
+            if (/non[- ]cardioembolic\s+tia/.test(t))                              flags.add('non_cardioembolic_tia');
+            if (/coronary\s+(?:artery\s+)?revasculari/.test(t))                    flags.add('coronary_revascularization');
+
+            // Cardiac function
+            if (/lv\s+dysfunction|left\s+ventricular\s+dysfunction|lvsd/.test(t))  flags.add('lv_dysfunction');
+            if (/systolic\s+(?:heart\s+failure|hf)\b/.test(t))                     flags.add('systolic_heart_failure');
+            if (/\blvef\s*<?=?\s*40|ejection\s+fraction\s*<?=?\s*40|ef\s*<?=?\s*40/.test(t)) flags.add('lvef_lt40_percent');
+
+            // Bleeding risk
+            if (/excessive\s+bleed|major\s+bleed(?!.*life)/.test(t))               flags.add('excessive_bleeding_risk');
+            if (/life[\s-]threatening\s+bleed/.test(t))                             flags.add('life_threatening_bleeding');
+            if (/gi\s+bleed|gastrointestinal\s+bleed/.test(t))                     flags.add('high_gastrointestinal_bleeding_risk');
+
+            // Current medications / therapy
+            if (/\baspirin\s+intoleran/.test(t))                                    flags.add('aspirin_intolerance');
+            if (/\bantiplatelet/.test(t))                                            flags.add('antiplatelet_therapy');
+            if (/\bace\s+inhibitor|\bacei\b/.test(t))                               flags.add('ace_inhibitor');
+            if (/\barb\b|angiotensin\s+receptor\s+blocker/.test(t))                flags.add('arb');
+            if (/statin.*max(?:imum)?\s+tolerat|max(?:imum)?\s+tolerat.*statin/.test(t)) flags.add('statin_max_tolerated');
+            if (/\bezetimibe/.test(t))                                               flags.add('ezetimibe_used');
+
+            // LDL / lipid targets
+            if (/ldl[- ]c?\s+(?:target|goal).*not\s+(?:achiev|met)|not\s+(?:achiev|met).*ldl/.test(t)) flags.add('ldl_goal_not_achieved');
+            if (/hypertriglycerid/.test(t))                                         flags.add('hypertriglyceridaemia');
+
+            // Pregnancy / contraception
+            if (/pregnan/.test(t))                                                  flags.add('considering_pregnancy');
+            if (/contraception/.test(t))                                            flags.add('adequate_contraception');
+
+            // Renal specifics
+            if (/\bdialysis/.test(t))                                               flags.add('dialysis_dependent_ckd');
+            if (/adequate\s+renal|normal\s+renal\s+function/.test(t))              flags.add('adequate_renal_function');
+            if (/significant\s+renal\s+impairment/.test(t))                        flags.add('significant_renal_impairment');
+            if (/drug\s+interaction/.test(t))                                       flags.add('potential_drug_interactions');
+
+            // Hypertension specifics
+            if (/ecg\s+abnormal|abnormal\s+ecg|ecg\s+change/.test(t))             flags.add('ecg_abnormalities');
+            if (/hmod|hypertension[- ]mediated\s+organ/.test(t))                   flags.add('hmod');
+            if (/uncontrolled.*(?:two|2|dual)[- ]drug|(?:two|2|dual)[- ]drug.*uncontrolled/.test(t)) flags.add('bp_uncontrolled_two_drugs');
+            if (/uncontrolled.*(?:three|3|triple)[- ]drug|(?:three|3|triple)[- ]drug.*uncontrolled/.test(t)) flags.add('bp_uncontrolled_three_drugs');
+            if (/\bfrail/.test(t))                                                  flags.add('frail');
+
+            // Genetics / risk modifiers
+            if (/genetic.*blood\s+pressure|hereditary.*hyperten|monogenic.*hyperten/.test(t)) flags.add('genetic_bp_disorder');
+            if (/additional.*(?:ascvd|cvd)\s+risk\s+factor/.test(t))               flags.add('additional_ascvd_risk_factors');
+
+            return flags;
+        }
+
+        // ── Patient data helpers ─────────────────────────────────────────────
+        function gatherPatientData() {
+            const conditions = [];
+            conditionCheckboxes.forEach(cb => { if (cb.checked) conditions.push(cb.value); });
+
+            const riskFactors = [];
+            document.querySelectorAll('input[type="checkbox"][id^="risk-"]').forEach(cb => {
+                if (cb.checked) riskFactors.push(cb.value);
+            });
+
+            const history = [];
+            document.querySelectorAll('input[type="checkbox"][id^="hist-"]').forEach(cb => {
+                if (cb.checked) history.push(cb.value);
+            });
+
+            const notes = clinicalNotesEl.value;
+            return {
+                name:        patientNameEl.value,
+                age:         patientAgeEl.value   ? parseInt(patientAgeEl.value)    : null,
+                sex:         patientSexEl.value,
+                conditions:  conditions,
+                riskFactors: riskFactors,
+                history:     history,
+                notes:       notes,
+                notesFlags:  parseNotesFlags(notes),
+                bmi:         document.getElementById('bmi').value         ? parseFloat(document.getElementById('bmi').value)         : null,
+                bpSystolic:  document.getElementById('bp-systolic').value  ? parseInt(document.getElementById('bp-systolic').value)  : null,
+                bpDiastolic: document.getElementById('bp-diastolic').value ? parseInt(document.getElementById('bp-diastolic').value) : null,
+                derivedFacts: cachedRiskFacts || undefined
+            };
+        }
+
+        // ── DP-linkage: facts that can be auto-answered by running another DP ──
+        // Exact fact name (lowercase) → which DP can answer it.
+        // Keys must match the trimmed, lowercased fact names from the DB exactly.
+        const FACT_DP_LINKER = {
+            // Heart Failure DP
+            'heart_failure':          { dpName: 'heart failure',             label: 'Check Heart Failure' },
+            'lv_dysfunction':         { dpName: 'heart failure',             label: 'Check Heart Failure' },
+            'systolic_heart_failure': { dpName: 'heart failure',             label: 'Check Heart Failure' },
+            'hfref':                  { dpName: 'heart failure',             label: 'Check Heart Failure' },
+            // Diagnosis of Hypertension DP
+            'hypertension':           { dpName: 'diagnosis of hypertension', label: 'Check BP Diagnosis' },
+            'arterial_hypertension':  { dpName: 'diagnosis of hypertension', label: 'Check BP Diagnosis' },
+            'bp≥140/90':              { dpName: 'diagnosis of hypertension', label: 'Check BP Diagnosis' },
+            // Diabetes Mellitus DP
+            'diabetes_mellitus':      { dpName: 'diabetes mellitus',         label: 'Check Diabetes' },
+            // Risk Level DP
+            'very_high_risk':         { dpName: 'risk level',                label: 'Check Risk Level' },
+            'high_risk':              { dpName: 'risk level',                label: 'Check Risk Level' },
+            'very_high_cvd_risk':     { dpName: 'risk level',                label: 'Check Risk Level' },
+            'high_cvd_risk':          { dpName: 'risk level',                label: 'Check Risk Level' },
+            'low_cvd_risk':           { dpName: 'risk level',                label: 'Check Risk Level' },
+            'low/med_cvd_risk':       { dpName: 'risk level',                label: 'Check Risk Level' },
+        };
+
+        // Parent DP name → explicit list of linked dpNames that are allowed to show buttons.
+        // If a parent is not listed here, all links from FACT_DP_LINKER are allowed.
+        const DP_LINK_WHITELIST = {
+            'coronary heart disease': ['heart failure'],
+        };
+
+        function findLinkedDp(factName, parentDpName) {
+            const key       = (factName    || '').toLowerCase().trim().replace(/\s+/g, '_');
+            const parentKey = (parentDpName|| '').toLowerCase().trim();
+            const rule = FACT_DP_LINKER[key];
+            if (!rule) return null;
+            if (rule.dpName === parentKey) return null;
+            const allowed = DP_LINK_WHITELIST[parentKey];
+            if (allowed !== undefined && !allowed.includes(rule.dpName)) return null;
+            const dp = allRequests.find(r => r.name.toLowerCase() === rule.dpName);
+            return dp ? { dp, label: rule.label } : null;
+        }
+
+        // ── Explicit DP → fact → evaluator lookup table ──────────────────────
+        // Keys are lowercase-trimmed. Add new DPs/facts here as they are specified.
+        // Evaluators return true, false, or null (= not enough data).
+        const DP_FACT_RESOLVERS = (() => {
+            // ── Shared helpers ───────────────────────────────────────────────
+            const age = pd => pd.age;
+            const sex = pd => pd.sex;
+
+            // Returns true if notes mention this flag; null if not (absence ≠ false)
+            const fromNotes = key => pd => (pd.notesFlags && pd.notesFlags.has(key)) ? true : null;
+
+            const hasT1Diabetes   = pd => pd.conditions.includes('diabetes_t1') || fromNotes('diabetes_t1')(pd) === true;
+            const hasT2Diabetes   = pd => pd.conditions.includes('diabetes_t2') || fromNotes('diabetes_t2')(pd) === true;
+            const hasDiabetes     = pd => hasT1Diabetes(pd) || hasT2Diabetes(pd) || fromNotes('diabetes')(pd) === true;
+            const hasSmoking      = pd => pd.conditions.includes('smoking');
+            const hasObesity      = pd => pd.conditions.includes('obesity') || (pd.bmi !== null && pd.bmi >= 30);
+            const hasFamilyHx        = pd => (pd.riskFactors || []).includes('family_history');
+            const hasRaisedLipids    = pd => (pd.riskFactors || []).includes('raised_lipids');
+            const hasWellControlledDM = pd => (pd.riskFactors || []).includes('well_controlled_dm');
+
+            // Hypertension: checkbox OR BP ≥ 140/90
+            const hasHypertension = pd => {
+                if (pd.conditions.includes('hypertension')) return true;
+                if (pd.bpSystolic  !== null && pd.bpSystolic  >= 140) return true;
+                if (pd.bpDiastolic !== null && pd.bpDiastolic >= 90)  return true;
+                return false;
+            };
+
+            // Returns 0 (none), 1, 2, 3 (grade), or -1 (has HTN but no BP for grading)
+            const htGradeNum = pd => {
+                const sys = pd.bpSystolic, dia = pd.bpDiastolic;
+                if (sys !== null || dia !== null) {
+                    if ((sys !== null && sys >= 180) || (dia !== null && dia >= 110)) return 3;
+                    if ((sys !== null && sys >= 160) || (dia !== null && dia >= 100)) return 2;
+                    if ((sys !== null && sys >= 140) || (dia !== null && dia >= 90))  return 1;
+                    return 0;
+                }
+                return pd.conditions.includes('hypertension') ? -1 : 0;
+            };
+            // Grade fact: true only for that grade; null if grade is unknown
+            const htGrade = n => pd => { const g = htGradeNum(pd); return g === -1 ? null : g === n; };
+
+            // Sex + age combos
+            const maleUnder   = n => pd => !sex(pd) ? null : sex(pd) !== 'male'   ? false : age(pd) === null ? null : age(pd) < n;
+            const femaleUnder = n => pd => !sex(pd) ? null : sex(pd) !== 'female' ? false : age(pd) === null ? null : age(pd) < n;
+
+            // Age comparisons
+            const ageUnder   = n      => pd => age(pd) === null ? null : age(pd) <  n;
+            const ageOver    = n      => pd => age(pd) === null ? null : age(pd) >  n;
+            const ageAtLeast = n      => pd => age(pd) === null ? null : age(pd) >= n;
+            const ageBetween = (lo,hi) => pd => age(pd) === null ? null : age(pd) >= lo && age(pd) <= hi;
+
+            const hasASCVD       = pd => (pd.history || []).includes('established_ascvd') || fromNotes('established_ascvd')(pd) === true;
+            const hasMental      = pd => (pd.history || []).includes('mental_disorder');
+            const hasCKD         = pd => (pd.riskFactors || []).includes('ckd')         || fromNotes('ckd')(pd) === true;
+            const hasFamilialHC  = pd => (pd.riskFactors || []).includes('familial_hc') || fromNotes('familial_hypercholesterolaemia')(pd) === true;
+
+            // No known CV risk factors: true only when every relevant checkbox is unchecked
+            const noKnownCVRisk = pd =>
+                pd.conditions.length === 0 && (pd.riskFactors || []).length === 0 && !(pd.history || []).includes('established_ascvd');
+
+            return {
+                // ── CVD Risk Assessment ──────────────────────────────────────
+                'cvd risk assessment': {
+                    'male_under_40':              maleUnder(40),
+                    'female_under_50':            femaleUnder(50),
+                    'diabetes_mellitus':          hasDiabetes,
+                    'type_1_diabetes_mellitus':   hasT1Diabetes,
+                    'type_2_diabetes_mellitus':   hasT2Diabetes,
+                    'arterial_hypertension':      hasHypertension,
+                    'smoking':                    hasSmoking,
+                    'obesity':                    hasObesity,
+                    'family_history_premature_cvd': hasFamilyHx,
+                    'raised_lipids':              hasRaisedLipids,
+                    'no_known_cv_risk_factors':   noKnownCVRisk,
+                    'comorbidities_increasing_cvd_risk': pd =>
+                        hasCKD(pd) || fromNotes('heart_failure')(pd) === true || fromNotes('atrial_fibrillation')(pd) === true ? true : null,
+                },
+
+                // ── CVD Risk Estimation Method ───────────────────────────────
+                'cvd risk estimation method': {
+                    'established_ascvd':          hasASCVD,
+                    'diabetes_mellitus':          hasDiabetes,
+                    'type_1_diabetes_mellitus':   hasT1Diabetes,
+                    'type_2_diabetes_mellitus':   hasT2Diabetes,
+                    'chronic_kidney_disease':     hasCKD,
+                    'genetic_lipid_disorder':     pd => hasRaisedLipids(pd) || hasFamilialHC(pd),
+                    'genetic_bp_disorder':        fromNotes('genetic_bp_disorder'),
+                    'age_under_70':               ageUnder(70),
+                    'age_70_or_over':             ageAtLeast(70),
+                },
+
+                // ── Risk level ───────────────────────────────────────────────
+                'risk level': {
+                    'established_ascvd':            hasASCVD,
+                    'ascvd':                        hasASCVD,
+                    'under_50_years':               ageUnder(50),
+                    'between_50_and_69_years':      ageBetween(50, 69),
+                    '70_years_or_older':            ageAtLeast(70),
+                    'over_40_years':                ageOver(40),
+                    'type_1_diabetes_mellitus':     hasT1Diabetes,
+                    'type_2_diabetes_mellitus':     hasT2Diabetes,
+                    'type 1 dm':                    hasT1Diabetes,
+                    'diabetes':                     hasDiabetes,
+                    'patients with dm without ascvd':          pd => hasDiabetes(pd) && !hasASCVD(pd),
+                    'patients with dm with established_ascvd': pd => hasDiabetes(pd) && hasASCVD(pd),
+                    'ckd':                          hasCKD,
+                    // If CKD present but severity unknown → null (appears in Tell Us More)
+                    'moderate_ckd':                 pd => fromNotes('moderate_ckd')(pd) ?? (hasCKD(pd) ? null : false),
+                    'severe_ckd':                   pd => fromNotes('severe_ckd')(pd) ?? (hasCKD(pd) ? null : false),
+                    'familial_hypercholesterolemia': hasFamilialHC,
+                    'target_organ_damage':          fromNotes('tod'),
+                    'tod':                          fromNotes('tod'),
+                    'severe_tod':                   pd => fromNotes('severe_tod')(pd) ?? fromNotes('tod')(pd),
+                    'additional_ascvd_risk_factors': fromNotes('additional_ascvd_risk_factors'),
+                    'markedly_elevated_cholesterol': fromNotes('markedly_elevated_cholesterol'),
+                    'well_controlled_short_standing_dm':       hasWellControlledDM,
+                    'well_controlled_short_standing_diabetes': hasWellControlledDM,
+                },
+
+                // ── Hypertension Treatment ───────────────────────────────────
+                'hypertension treatment': {
+                    'age_18_69':                ageBetween(18, 69),
+                    'age_≥70':                  ageAtLeast(70),
+                    'diabetes_mellitus':        hasDiabetes,
+                    'type_1_diabetes_mellitus': hasT1Diabetes,
+                    'type_2_diabetes_mellitus': hasT2Diabetes,
+                    // Grade facts — based on BP readings; null if HTN checkbox set but no BP entered
+                    'grade_1_hypertension':     htGrade(1),
+                    'grade_2_hypertension':     htGrade(2),
+                    'grade_3_hypertension':     htGrade(3),
+                    'hypertension_grade_1':     htGrade(1),
+                    'hypertension_grade_2':     htGrade(2),
+                    'hypertension_grade_3':     htGrade(3),
+                    'mild_hypertension':        htGrade(1),
+                    'moderate_hypertension':    htGrade(2),
+                    'severe_hypertension':      htGrade(3),
+                    'high_normal_bp': pd => {
+                        const sys = pd.bpSystolic, dia = pd.bpDiastolic;
+                        if (sys === null && dia === null) return null;
+                        const hiNorm = (sys !== null && sys >= 130 && sys < 140) || (dia !== null && dia >= 85 && dia < 90);
+                        return hiNorm ? true : false;
+                    },
+                    // Risk level — resolved from derivedFacts populated by Risk Level pre-run
+                    'low_cvd_risk':             pd => pd.derivedFacts?.['low_cvd_risk']  ?? null,
+                    'high_cvd_risk':            pd => pd.derivedFacts?.['high_cvd_risk'] ?? null,
+                    // Organ damage / investigation flags
+                    'ecg_abnormalities':        fromNotes('ecg_abnormalities'),
+                    'possible_lv_dysfunction':  fromNotes('lv_dysfunction'),
+                    'hmod_present':             fromNotes('hmod'),
+                    // Current medication status
+                    'ace_inhibitor':            fromNotes('ace_inhibitor'),
+                    'arb':                      fromNotes('arb'),
+                    // Uncontrolled BP on therapy
+                    'bp_uncontrolled_two_drugs':   fromNotes('bp_uncontrolled_two_drugs'),
+                    'bp_uncontrolled_three_drugs':  fromNotes('bp_uncontrolled_three_drugs'),
+                    // Patient status
+                    'frail_older_patient':      pd => fromNotes('frail')(pd) ?? (ageAtLeast(75)(pd) === true ? null : false),
+                },
+
+                // ── Dyslipidaemias in diabetes mellitus ──────────────────────
+                'dyslipidaemias in diabetes mellitus': {
+                    'established_ascvd':        hasASCVD,
+                    'over_40_years':            ageOver(40),
+                    'type_1_diabetes_mellitus': hasT1Diabetes,
+                    // Return null (not false) when T2DM unconfirmed — lets it appear in Tell us more.
+                    'type_2_diabetes_mellitus': pd => hasT2Diabetes(pd) ? true : null,
+                    'diabetes':                 hasDiabetes,
+                    'severe_tod':               pd => fromNotes('severe_tod')(pd) ?? fromNotes('tod')(pd),
+                    'target_organ_damage':      fromNotes('tod'),
+                    'ckd':                                     hasCKD,
+                    'well_controlled_short_standing_dm':       hasWellControlledDM,
+                    'well_controlled_short_standing_diabetes': hasWellControlledDM,
+                    'very_high_risk': pd => {
+                        if (hasASCVD(pd)) return true;
+                        const tod = fromNotes('severe_tod')(pd) ?? fromNotes('tod')(pd);
+                        return tod === true ? true : (tod === false ? false : null);
+                    },
+                    'high_risk': pd => {
+                        if (!hasDiabetes(pd)) return null;
+                        if (hasASCVD(pd)) return false;
+                        const tod = fromNotes('severe_tod')(pd) ?? fromNotes('tod')(pd);
+                        if (tod === null) return null;
+                        return !tod;
+                    },
+                },
+
+                // ── Pharmacological LDL-C Lowering ───────────────────────────
+                'pharmacological ldl-c lowering': {
+                    'age_70_or_over':                    ageAtLeast(70),
+                    'age_under_70':                      ageUnder(70),
+                    'established_ascvd':                 hasASCVD,
+                    'familial_hypercholesterolaemia':    hasFamilialHC,
+                    'familial_hypercholesterolemia':     hasFamilialHC,
+                    'premenopausal_female':              pd => sex(pd) === 'female' ? (age(pd) !== null ? age(pd) < 50 : null) : false,
+                    'diabetes_mellitus':                 hasDiabetes,
+                    'ldl_goal_not_achieved':             fromNotes('ldl_goal_not_achieved'),
+                    'statin_max_tolerated':              fromNotes('statin_max_tolerated'),
+                    'ezetimibe_used':                    fromNotes('ezetimibe_used'),
+                    'considering_pregnancy':             fromNotes('considering_pregnancy'),
+                    'adequate_contraception':            fromNotes('adequate_contraception'),
+                    'hypertriglyceridaemia':             fromNotes('hypertriglyceridaemia'),
+                    'significant_renal_impairment':      fromNotes('significant_renal_impairment'),
+                    'potential_drug_interactions':       fromNotes('potential_drug_interactions'),
+                    // CKD dialysis status — if on dialysis → dialysis_dependent; if CKD but not dialysis → non_dialysis
+                    'dialysis_dependent_ckd':            fromNotes('dialysis_dependent_ckd'),
+                    'non_dialysis_ckd':                  pd => fromNotes('dialysis_dependent_ckd')(pd) === true ? false
+                                                             : hasCKD(pd) ? true : false,
+                },
+
+                // ── LDL-Cholesterol Treatment Intensification ────────────────
+                'ldl-cholesterol treatment intensification': {
+                    'established_ascvd':        hasASCVD,
+                    'diabetes_mellitus':        hasDiabetes,
+                    'type_1_diabetes_mellitus': hasT1Diabetes,
+                    'type_2_diabetes_mellitus': hasT2Diabetes,
+                },
+
+                // ── Lower Extremity Arterial Disease ─────────────────────────
+                'lower extremity arterial disease': {
+                    'established_ascvd':                    hasASCVD,
+                    'lead':                                 fromNotes('lead'),
+                    'intermittent_claudication':            fromNotes('intermittent_claudication'),
+                    'smoking':                              hasSmoking,
+                    'diabetes_mellitus':                    hasDiabetes,
+                    'type_1_diabetes_mellitus':             hasT1Diabetes,
+                    'type_2_diabetes_mellitus':             hasT2Diabetes,
+                    'hypertension':                         hasHypertension,
+                    // Resolved from Risk Level pre-run via derivedFacts
+                    'low/med_cvd_risk':                     pd => pd.derivedFacts?.['low/med_cvd_risk'] ?? null,
+                    // null = unknown → appears in Tell us more for manual confirmation
+                    'supervised_exercise_program_available': () => null,
+                },
+
+                // ── Coronary Heart Disease ───────────────────────────────────
+                'coronary heart disease': {
+                    'established_ascvd':              hasASCVD,
+                    'previous_myocardial_infarction': fromNotes('previous_myocardial_infarction'),
+                    'coronary_revascularization':     pd => fromNotes('coronary_revascularization')(pd) ?? fromNotes('coronary_stenting')(pd),
+                    'acute_coronary_syndrome':        fromNotes('acute_coronary_syndrome'),
+                    'chronic_coronary_syndrome':      fromNotes('chronic_coronary_syndrome'),
+                    'coronary_stenting':              fromNotes('coronary_stenting'),
+                    'heart_failure':                  fromNotes('heart_failure'),
+                    'lv_dysfunction':                 fromNotes('lv_dysfunction'),
+                    'systolic_heart_failure':         fromNotes('systolic_heart_failure'),
+                    'excessive_bleeding_risk':        fromNotes('excessive_bleeding_risk'),
+                    'life_threatening_bleeding':      fromNotes('life_threatening_bleeding'),
+                    'diabetes_mellitus':              hasDiabetes,
+                    'type_1_diabetes_mellitus':       hasT1Diabetes,
+                    'type_2_diabetes_mellitus':       hasT2Diabetes,
+                    'hypertension':                   hasHypertension,
+                },
+
+                // ── Diabetes Mellitus (alias covers the "Metellus" typo in the DB) ──
+                'diabetes mellitus': {
+                    'established_ascvd':        hasASCVD,
+                    'diabetes_mellitus':        hasDiabetes,
+                    'type_1_diabetes_mellitus': hasT1Diabetes,
+                    'type_2_diabetes_mellitus': hasT2Diabetes,
+                    'diabetes':                 hasDiabetes,
+                    'ckd':                      hasCKD,
+                    'well_controlled_short_standing_dm':       hasWellControlledDM,
+                    'well_controlled_short_standing_diabetes': hasWellControlledDM,
+                    'heart_failure':            fromNotes('heart_failure'),
+                    'hfref':                    fromNotes('symptomatic_hfref'),
+                    'adequate_renal_function':  fromNotes('adequate_renal_function'),
+                },
+                'diabetes metellus': {
+                    'established_ascvd':        hasASCVD,
+                    'diabetes_mellitus':        hasDiabetes,
+                    'type_1_diabetes_mellitus': hasT1Diabetes,
+                    'type_2_diabetes_mellitus': hasT2Diabetes,
+                    'diabetes':                 hasDiabetes,
+                    'ckd':                      hasCKD,
+                    'well_controlled_short_standing_dm':       hasWellControlledDM,
+                    'well_controlled_short_standing_diabetes': hasWellControlledDM,
+                    'heart_failure':            fromNotes('heart_failure'),
+                    'hfref':                    fromNotes('symptomatic_hfref'),
+                    'adequate_renal_function':  fromNotes('adequate_renal_function'),
+                },
+
+                // ── Diagnosis of Hypertension ────────────────────────────────
+                // Facts are mutually exclusive BP range bands; null if that
+                // measurement wasn't entered.
+                'diagnosis of hypertension': {
+                    'sbp_<139':    pd => pd.bpSystolic  !== null ? pd.bpSystolic  <  140                            : null,
+                    'sbp_140-159': pd => pd.bpSystolic  !== null ? pd.bpSystolic  >= 140 && pd.bpSystolic  <= 159   : null,
+                    'sbp_160-179': pd => pd.bpSystolic  !== null ? pd.bpSystolic  >= 160 && pd.bpSystolic  <= 179   : null,
+                    'sbp_>180':    pd => pd.bpSystolic  !== null ? pd.bpSystolic  >= 180                            : null,
+                    'dbp_<84':     pd => pd.bpDiastolic !== null ? pd.bpDiastolic <  85                             : null,
+                    'dbp_85-99':   pd => pd.bpDiastolic !== null ? pd.bpDiastolic >= 85  && pd.bpDiastolic <= 99    : null,
+                    'dbp_100-109': pd => pd.bpDiastolic !== null ? pd.bpDiastolic >= 100 && pd.bpDiastolic <= 109   : null,
+                    'dbp_>110':    pd => pd.bpDiastolic !== null ? pd.bpDiastolic >= 110                            : null,
+                },
+
+                // ── Heart Failure ────────────────────────────────────────────
+                'heart failure': {
+                    'heart_failure':      fromNotes('heart_failure'),
+                    'symptomatic_hfref':  fromNotes('symptomatic_hfref'),
+                    'stable_hfref':       fromNotes('symptomatic_hfref'),
+                    'lvef_lt40_percent':  fromNotes('lvef_lt40_percent'),
+                },
+
+                // ── Cerebrovascular Disease ──────────────────────────────────
+                'cerebrovascular disease': {
+                    'cerebrovascular_event':  pd => fromNotes('stroke')(pd) ?? fromNotes('tia')(pd),
+                    'stroke':                 fromNotes('stroke'),
+                    'tia':                    fromNotes('tia'),
+                    // If stroke/TIA noted but mechanism unknown → null (ask in Tell Us More)
+                    'non_cardioembolic_ischaemic_stroke': pd => fromNotes('non_cardioembolic_ischaemic_stroke')(pd)
+                                                              ?? (fromNotes('stroke')(pd) === true ? null : false),
+                    'cardioembolic_ischaemic_stroke':     pd => fromNotes('cardioembolic_stroke')(pd)
+                                                              ?? (fromNotes('stroke')(pd) === true ? null : false),
+                    'non_cardioembolic_tia': pd => fromNotes('non_cardioembolic_tia')(pd)
+                                                ?? (fromNotes('tia')(pd) === true ? null : false),
+                    'cardioembolic_tia':     pd => fromNotes('cardioembolic_tia')(pd)
+                                                ?? (fromNotes('tia')(pd) === true ? null : false),
+                    'bp≥140/90': pd => {
+                        if (pd.bpSystolic  !== null && pd.bpSystolic  >= 140) return true;
+                        if (pd.bpDiastolic !== null && pd.bpDiastolic >= 90)  return true;
+                        if (pd.bpSystolic  !== null || pd.bpDiastolic !== null) return false;
+                        return null;
+                    },
+                },
+
+                // ── Antithrombotic Therapy ───────────────────────────────────
+                // Established ASCVD = secondary prevention
+                'antithrombotic therapy': {
+                    'secondary_prevention_cvd':          hasASCVD,
+                    'aspirin_intolerance':               fromNotes('aspirin_intolerance'),
+                    'high_gastrointestinal_bleeding_risk': fromNotes('high_gastrointestinal_bleeding_risk'),
+                    'antiplatelet_therapy':              fromNotes('antiplatelet_therapy'),
+                },
+
+                // ── Mental Health Support in CVD Risk Management ─────────────
+                'mental health support in cvd risk management': {
+                    'mental_disorder':   hasMental,
+                    'major_depression':  pd => hasMental(pd) || fromNotes('major_depression')(pd) === true,
+                    'established_ascvd': hasASCVD,
+                    'heart_failure':     fromNotes('heart_failure'),
+                },
+            };
+        })();
+
+        // Maps a Risk Level DP prediction string to a flat boolean-fact object.
+        // Used to propagate risk-level results into treatment DP fact resolution.
+        function riskPredToFacts(prediction) {
+            const p = (prediction || '').toLowerCase().trim().replace(/\s+/g, '_');
+            return {
+                very_high_risk:     p === 'very_high_risk',
+                high_risk:          p === 'high_risk',
+                moderate_risk:      p === 'moderate_risk',
+                low_risk:           p === 'low_risk',
+                // aliases used by treatment DPs whose fact names include "cvd"
+                very_high_cvd_risk:  p === 'very_high_risk',
+                high_cvd_risk:       p === 'high_risk',
+                moderate_cvd_risk:   p === 'moderate_risk',
+                low_cvd_risk:        p === 'low_risk' || p === 'low_to_high_risk',
+                'low/med_cvd_risk':  p === 'low_risk' || p === 'low_to_high_risk' || p === 'moderate_risk',
+            };
+        }
+
+        // Looks up the explicit resolver first; falls back to generic inference.
+        // Tries three forms of the fact name: exact lowercase, spaces→underscores, underscores→spaces.
+        // Also checks pd.derivedFacts (populated by a prior Risk Level pre-run) before the resolver table.
+        function resolveFactForDp(dpName, factName, pd) {
+            // Derived facts from a pre-run DP (e.g. Risk Level) take priority over form-based resolvers.
+            if (pd.derivedFacts) {
+                const key  = (factName || '').toLowerCase().trim().replace(/\s+/g, '_');
+                const key2 = key.replace(/_/g, ' ');
+                if (key  in pd.derivedFacts) return pd.derivedFacts[key];
+                if (key2 in pd.derivedFacts) return pd.derivedFacts[key2];
+            }
+
+            const dpNameNorm  = (dpName || '').toLowerCase().trim().replace(/_/g, ' ');
+            const dpResolvers = DP_FACT_RESOLVERS[dpNameNorm];
+            if (dpResolvers) {
+                const base = (factName || '').toLowerCase().trim();
+                // Fix UTF-8 bytes misread as Windows-1252: â‰¥ → ≥ (U+2265), â€” → – (U+2013)
+                const clean = base.replace(/â‰¥/g, '≥').replace(/â€”/g, '–');
+                const underscored = clean.replace(/\s+/g, '_');
+                const spaced      = clean.replace(/_/g, ' ');
+                const resolver = dpResolvers[base] || dpResolvers[clean] || dpResolvers[underscored] || dpResolvers[spaced];
+                if (resolver) {
+                    try { return resolver(pd); } catch { return null; }
+                }
+            }
+            return undefined; // not found in explicit table → fall through to generic
+        }
+
+        // Takes the DP's stored fact list and sets each fact true/false based on
+        // patient data, leaving it unknown if we don't have enough information.
+        function evaluateDpFacts(dpFacts, patientData, dpName) {
+            return dpFacts.map(rawFact => {
+                // Trim fact names — DB entries sometimes have leading/trailing spaces that
+                // break Cognica's policy variable matching.
+                const fact = { ...rawFact, fact: (rawFact.fact || '').trim() };
+
+                // Internal facts: resolve from derivedFacts first (clinical page calls /api/predict
+                // directly, so the backend won't auto-follow internalSourceDp for us).
+                if (fact.factType === 'internal') {
+                    if (patientData.derivedFacts) {
+                        const k  = (fact.fact || '').toLowerCase().trim().replace(/\s+/g, '_');
+                        const k2 = k.replace(/_/g, ' ');
+                        const val = k in patientData.derivedFacts ? patientData.derivedFacts[k]
+                                  : k2 in patientData.derivedFacts ? patientData.derivedFacts[k2]
+                                  : undefined;
+                        if (val !== undefined)
+                            return { ...fact, factHold: !!val, factStatus: val ? 'true' : 'false' };
+                    }
+                    return fact;
+                }
+
+                const explicit = resolveFactForDp(dpName, fact.fact, patientData);
+                if (explicit !== undefined) {
+                    if (explicit !== null) {
+                        return { ...fact, factHold: explicit, factStatus: explicit ? 'true' : 'false' };
+                    }
+                    // Resolver returned null = not enough info yet; leave as unknown
+                    return { ...fact, factHold: false, factStatus: 'unknown' };
+                }
+                // No explicit resolver — try generic inference
+                const inferred = inferFactValue(fact.fact, patientData);
+                if (inferred !== null && inferred !== undefined) {
+                    return { ...fact, factHold: inferred, factStatus: inferred ? 'true' : 'false' };
+                }
+                return fact;
+            });
+        }
+
+        // Adds resolver-known facts that are not already present in the evaluated list.
+        // This covers cases where a policy fact is not in the DB's factsJson template
+        // (e.g. type_2_diabetes_mellitus missing from the template but used in the rules).
+        function supplementWithResolvers(evaluatedFacts, dpName, patientData) {
+            const dpNameNorm = (dpName || '').toLowerCase().trim().replace(/_/g, ' ');
+            const dpResolvers = DP_FACT_RESOLVERS[dpNameNorm];
+            if (!dpResolvers) return evaluatedFacts;
+
+            // Build a set of already-covered fact names (all normalised variants)
+            const covered = new Set();
+            for (const f of evaluatedFacts) {
+                const n = (f.fact || '').toLowerCase().trim();
+                covered.add(n);
+                covered.add(n.replace(/\s+/g, '_'));
+                covered.add(n.replace(/_/g, ' '));
+            }
+
+            const extra = [];
+            for (const [factName, resolver] of Object.entries(dpResolvers)) {
+                const n = factName.toLowerCase().trim();
+                if (covered.has(n) || covered.has(n.replace(/\s+/g, '_')) || covered.has(n.replace(/_/g, ' '))) continue;
+                try {
+                    const value = resolver(patientData);
+                    if (value !== null && value !== undefined) {
+                        extra.push({ fact: factName, factHold: value, factStatus: value ? 'true' : 'false', factType: 'external' });
+                    }
+                } catch { /* skip */ }
+            }
+            return extra.length > 0 ? [...evaluatedFacts, ...extra] : evaluatedFacts;
+        }
+
+        // Fallback for DPs that have no fact template.
+        function patientDataToFacts(patientData) {
+            const facts = [];
+            const known = (fact) => ({ fact, factHold: true,  factStatus: 'true',  factType: 'external' });
+            const no    = (fact) => ({ fact, factHold: false, factStatus: 'false', factType: 'external' });
+
+            if (patientData.age !== null) {
+                facts.push(known(`patient age is ${patientData.age}`));
+            }
+            if (patientData.sex) {
+                facts.push(known(`patient is ${patientData.sex}`));
+            }
+            patientData.conditions.forEach(c => facts.push(known(`patient has ${c.replace(/_/g, ' ')}`)));
+            patientData.riskFactors.forEach(r => facts.push(known(r.replace(/_/g, ' '))));
+            (patientData.history || []).forEach(h => facts.push(known(h.replace(/_/g, ' '))));
+            if (patientData.bmi   !== null) facts.push(known(`patient bmi is ${patientData.bmi}`));
+            if (patientData.bpSystolic  !== null) facts.push(known(`systolic blood pressure is ${patientData.bpSystolic}`));
+            if (patientData.bpDiastolic !== null) facts.push(known(`diastolic blood pressure is ${patientData.bpDiastolic}`));
+            if (patientData.notesFlags) {
+                patientData.notesFlags.forEach(flag => facts.push(known(flag.replace(/_/g, ' '))));
+            }
+            return facts;
+        }
+
+        // Core matcher: given a natural-language fact description and patient data,
+        // returns true, false, or null (= not enough data to decide).
+        function inferFactValue(factText, pd) {
+            const t = (factText || '').toLowerCase().replace(/_/g, ' ');
+
+            const hasSex  = pd.sex && pd.sex !== '';
+            const isMale  = pd.sex === 'male';
+            const isFemale= pd.sex === 'female';
+
+            // ── Age threshold extractor ──────────────────────────────────────
+            function ageOp() {
+                let m;
+                m = t.match(/between\s+(\d+)\s+and\s+(\d+)/) || t.match(/(\d+)\s*[-–]\s*(\d+)\s*(?:years?|yrs?)?/);
+                if (m) return { op: 'range', lo: +m[1], hi: +m[2] };
+                m = t.match(/(?:under|below|younger than|less than|<)\s*(\d+)/);
+                if (m) return { op: '<', val: +m[1] };
+                m = t.match(/(?:over|above|older than|more than|greater than|>)\s*(\d+)/);
+                if (m) return { op: '>', val: +m[1] };
+                m = t.match(/(?:at least|>=?)\s*(\d+)/) || t.match(/(\d+)\s*or\s+older/);
+                if (m) return { op: '>=', val: +m[1] };
+                m = t.match(/(?:at most|<=?)\s*(\d+)/) || t.match(/(\d+)\s*or\s+younger/);
+                if (m) return { op: '<=', val: +m[1] };
+                m = t.match(/\baged?\s+(\d+)\b/);
+                if (m) return { op: '==', val: +m[1] };
+                return null;
+            }
+
+            function evalAge(op) {
+                if (pd.age === null) return null;
+                if (op.op === 'range') return pd.age >= op.lo && pd.age <= op.hi;
+                if (op.op === '<')    return pd.age <  op.val;
+                if (op.op === '>')    return pd.age >  op.val;
+                if (op.op === '<=')   return pd.age <= op.val;
+                if (op.op === '>=')   return pd.age >= op.val;
+                if (op.op === '==')   return pd.age === op.val;
+                return null;
+            }
+
+            const mentionsMale   = /\b(male|man|men)\b/.test(t);
+            const mentionsFemale = /\b(female|woman|women)\b/.test(t);
+            const op = ageOp();
+
+            // ── Sex + Age combos: "male under 40", "female over 65" ──────────
+            if ((mentionsMale || mentionsFemale) && op) {
+                if (!hasSex || pd.age === null) return null;
+                const sexOk = mentionsMale ? isMale : isFemale;
+                const ageOk = evalAge(op);
+                if (ageOk === null) return null;
+                return sexOk && ageOk;
+            }
+
+            // ── Sex only ────────────────────────────────────────────────────
+            if (mentionsMale   && !mentionsFemale) return hasSex ? isMale   : null;
+            if (mentionsFemale && !mentionsMale)   return hasSex ? isFemale : null;
+
+            // ── Age only ────────────────────────────────────────────────────
+            if (op) return evalAge(op);
+
+            // ── Medical conditions ───────────────────────────────────────────
+            const conds = pd.conditions;
+            if (/\b(t1dm|type[\s_]*1[\s_]*diabetes|type[\s_]*1[\s_]*dm)\b/.test(t))
+                return conds.includes('diabetes_t1');
+            if (/\b(t2dm|type[\s_]*2[\s_]*diabetes|type[\s_]*2[\s_]*dm)\b/.test(t))
+                return conds.includes('diabetes_t2');
+            if (/\b(diabetes|diabetic|dm\b)/.test(t))
+                return conds.includes('diabetes_t1') || conds.includes('diabetes_t2');
+            if (/\b(hypertension|hypertensive|high blood pressure)/.test(t))
+                return conds.includes('hypertension');
+            if (/\b(smok|tobacco|cigarette)/.test(t))
+                return conds.includes('smoking');
+            if (/\b(obes)/.test(t) || /bmi\s*[>≥]\s*30/.test(t)) {
+                if (pd.bmi !== null) return pd.bmi >= 30;
+                return conds.includes('obesity');
+            }
+            if (/\boverweight\b/.test(t) || /bmi\s*[>≥]\s*25/.test(t)) {
+                if (pd.bmi !== null) return pd.bmi >= 25;
+                return null;
+            }
+
+            // ── BMI numeric ──────────────────────────────────────────────────
+            if (/\bbmi\b/.test(t) && pd.bmi !== null) {
+                let m;
+                m = t.match(/bmi[^0-9]*(?:above|over|>|≥|at least)\s*([0-9.]+)/);
+                if (m) return pd.bmi > +m[1];
+                m = t.match(/bmi[^0-9]*(?:below|under|<|≤|at most)\s*([0-9.]+)/);
+                if (m) return pd.bmi < +m[1];
+            }
+
+            // ── Blood pressure ───────────────────────────────────────────────
+            if (/\b(blood pressure|systolic|bp)\b/.test(t) && pd.bpSystolic !== null) {
+                let m;
+                m = t.match(/(?:above|over|>|≥)\s*([0-9]+)/);
+                if (m) return pd.bpSystolic > +m[1];
+                m = t.match(/(?:below|under|<|≤)\s*([0-9]+)/);
+                if (m) return pd.bpSystolic < +m[1];
+                if (/(?:high|elevated|uncontrolled)/.test(t)) return pd.bpSystolic >= 140;
+                if (/(?:controlled|normal)/.test(t))          return pd.bpSystolic < 140;
+            }
+
+            // ── Risk factors (from the Additional Risk Factors checkboxes) ───
+            const rf = pd.riskFactors || [];
+            if (/family\s*(history|hx|h\/x)/.test(t))       return rf.includes('family_history');
+            if (/\b(raised lipids|dyslipidaem|dyslipidemia|high cholesterol)/.test(t)) return rf.includes('raised_lipids');
+            if (/\b(ckd|chronic kidney disease)\b/.test(t))  return rf.includes('ckd') || (pd.notesFlags && pd.notesFlags.has('ckd')) || false;
+            if (/familial\s+hyperchol/.test(t))              return rf.includes('familial_hc') || (pd.notesFlags && pd.notesFlags.has('familial_hypercholesterolaemia')) || false;
+            if (/well.controlled\s*(dm|diabetes)/.test(t))   return rf.includes('well_controlled_dm');
+            if (/arterial\s*hypertension/.test(t))           return conds.includes('hypertension');
+
+            return null; // can't determine from available data
+        }
+
+        // ── Solution trace (collapsible) ─────────────────────────────────────
+        function buildSolutionTrace(steps) {
+            if (!steps || steps.length === 0) return '';
+            let html = '<div class="solution-trace"><div class="solution-trace-title">Resolution trace</div>';
+            steps.forEach((step, i) => {
+                const num   = i + 1;
+                const name  = formatExplanation(step.assumptionQuery || step.dpName || `Step ${num}`);
+                const status= escapeHtml(step.status || '');
+                const updated = step.updatedFact ? `<div class="trace-updated">Updated: <em>${escapeHtml(step.updatedFact)}</em> → <strong>${escapeHtml(String(step.updatedFactValue))}</strong></div>` : '';
+                html += `
+                    <div class="trace-step">
+                        <div class="trace-step-header">
+                            <div class="trace-step-toggle">▶</div>
+                            <div class="trace-step-number">${num}</div>
+                            <div class="trace-summary">${name} <strong>(${status})</strong></div>
+                        </div>
+                        <div class="trace-step-content">${updated}</div>
+                    </div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function attachTraceHandlers() {
+            document.querySelectorAll('.trace-step-header:not([data-handler])').forEach(header => {
+                header.dataset.handler = '1';
+                header.addEventListener('click', function() {
+                    this.closest('.trace-step').classList.toggle('expanded');
+                });
+            });
+        }
+
+        function attachTellMoreHandlers() {
+            // ── Collapse toggle ──────────────────────────────────────────────
+            document.querySelectorAll('.tell-more-toggle:not([data-handler])').forEach(toggle => {
+                toggle.dataset.handler = '1';
+                toggle.addEventListener('click', function() {
+                    const body = this.nextElementSibling;
+                    const opening = body.hidden;
+                    body.hidden = !opening;
+                    this.classList.toggle('open', opening);
+                });
+            });
+
+            // ── Yes / No / ? buttons ─────────────────────────────────────────
+            document.querySelectorAll('.tell-more-question:not([data-handler])').forEach(question => {
+                question.dataset.handler = '1';
+                question.querySelectorAll('.fact-btn[data-value]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        question.querySelectorAll('.fact-btn').forEach(b =>
+                            b.classList.remove('active-yes', 'active-no', 'active-unknown'));
+                        if      (this.dataset.value === 'true')    this.classList.add('active-yes');
+                        else if (this.dataset.value === 'false')   this.classList.add('active-no');
+                        else if (this.dataset.value === 'unknown') this.classList.add('active-unknown');
+                    });
+                });
+            });
+
+            // ── Linked-DP buttons (run a related DP to auto-answer a fact) ───
+            document.querySelectorAll('.fact-btn-link:not([data-handler])').forEach(btn => {
+                btn.dataset.handler = '1';
+                btn.addEventListener('click', async function() {
+                    const linkedDpId = parseInt(this.dataset.linkedDpId);
+                    const linkedDp = allRequests.find(r => r.id === linkedDpId);
+                    if (!linkedDp) return;
+
+                    const question = this.closest('.tell-more-question');
+                    const origText = this.textContent;
+                    this.textContent = 'Running…';
+                    this.disabled = true;
+
+                    try {
+                        const freshData = gatherPatientData();
+                        const queryFact = (this.dataset.queryFact || '').toLowerCase().trim().replace(/[\s_]+/g, '_');
+                        const result     = await runSingleDp(linkedDp, freshData, queryFact || undefined);
+                        const _rawPred   = (result.cognicaPrediction || '').trim().toUpperCase();
+                        const prediction = _rawPred.startsWith('YES') ? 'YES' : _rawPred.startsWith('NO') ? 'NO' : _rawPred.startsWith('MAYBE') ? 'MAYBE' : _rawPred;
+
+                        question.querySelectorAll('.fact-btn').forEach(b =>
+                            b.classList.remove('active-yes', 'active-no', 'active-unknown'));
+
+                        if (prediction === 'YES') {
+                            question.querySelector('.fact-btn[data-value="true"]')?.classList.add('active-yes');
+                            this.textContent = `✓ Yes`;
+                        } else if (prediction === 'NO') {
+                            question.querySelector('.fact-btn[data-value="false"]')?.classList.add('active-no');
+                            this.textContent = `✓ No`;
+                        } else if (prediction === 'MAYBE') {
+                            const resolved      = extractConclusion(result.cognicaSummaryExplanation || '', linkedDp, 'MAYBE');
+                            const resolvedLabel = resolved.label;
+                            const queryLabel    = CONCLUSION_LABELS[queryFact] || queryFact.replace(/_/g, ' ');
+                            if (resolvedLabel.toLowerCase() === queryLabel.toLowerCase()) {
+                                question.querySelector('.fact-btn[data-value="true"]')?.classList.add('active-yes');
+                                this.textContent = `✓ Yes`;
+                            } else {
+                                question.querySelector('.fact-btn[data-value="false"]')?.classList.add('active-no');
+                                this.textContent = `✓ No`;
+                            }
+                        } else {
+                            question.querySelector('.fact-btn[data-value="unknown"]')?.classList.add('active-unknown');
+                            this.textContent = `? Unclear`;
+                            this.disabled = false;
+                        }
+                    } catch (err) {
+                        this.textContent = origText;
+                        this.disabled = false;
+                        console.error('Linked DP run failed:', err);
+                    }
+                });
+            });
+
+            // ── Update answer (re-run with merged facts) ─────────────────────
+            document.querySelectorAll('.tell-more-rerun:not([data-handler])').forEach(btn => {
+                btn.dataset.handler = '1';
+                btn.addEventListener('click', async function() {
+                    // Find DP directly from allRequests — no Map lookup, no type mismatch
+                    const dpId = parseInt(this.dataset.dpId);
+                    const dp   = allRequests.find(r => r.id === dpId);
+                    const card = document.getElementById(`card-${dpId}`);
+                    if (!dp || !card) return;
+
+                    // Show loading immediately so user knows something is happening
+                    this.disabled  = true;
+                    this.textContent = 'Updating…';
+
+                    // Read user selections directly from the DOM
+                    const body = this.closest('.tell-more-body');
+
+                    // Re-evaluate fresh from form data first
+                    const freshPatientData = gatherPatientData();
+                    const dpFacts    = safeParseJson(dp.factsJson, []);
+                    const freshFacts = dpFacts.length > 0
+                        ? supplementWithResolvers(evaluateDpFacts(dpFacts, freshPatientData, dp.name), dp.name, freshPatientData)
+                        : patientDataToFacts(freshPatientData);
+
+                    // Overlay whatever the user explicitly answered in the panel.
+                    // Use dataset.fact comparison (not CSS selector) to avoid escaping issues
+                    // with fact names that contain <, >, /, ≥, etc.
+                    const tellMoreRows = Array.from(body.querySelectorAll('.tell-more-question'));
+                    const updatedFacts = freshFacts.map(f => {
+                        // Match by exact name or canonical alias (e.g. "type 1 DM" ↔ "type_1_diabetes_mellitus")
+                        const row = tellMoreRows.find(el =>
+                            el.dataset.fact === f.fact ||
+                            canonicalFactName(el.dataset.fact) === canonicalFactName(f.fact)
+                        );
+                        if (!row) return f;
+                        if (row.querySelector('.fact-btn.active-yes')) return { fact: f.fact, factHold: true,  factStatus: 'true',  factType: 'external' };
+                        if (row.querySelector('.fact-btn.active-no'))  return { fact: f.fact, factHold: false, factStatus: 'false', factType: 'external' };
+                        return f; // active-unknown or blank → keep as-is
+                    });
+
+                    try {
+                        const complementaryOptions = safeParseJson(dp.complementaryOptionsJson, []);
+                        const policy = dp.policyInCognicaDPCNL || '';
+                        const query  = dp.query || complementaryOptions[0] || '';
+
+                        console.group(`[UpdateAnswer] ${dp.name}`);
+                        console.log('query:', query || '(empty!)');
+                        console.log('policy:', policy ? '(set, ' + policy.length + ' chars)' : '(empty!)');
+                        console.log('facts:', updatedFacts.map(f => `${f.fact} = ${f.factStatus}`));
+                        console.groupEnd();
+
+                        const response = await fetch(`${apiBase}/predict`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                actionType: 'getPrediction',
+                                policyInCognicaDPCNL: policy,
+                                query,
+                                complementaryOptions,
+                                facts: updatedFacts
+                            })
+                        });
+
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        console.log(`[UpdateAnswer] response → prediction=${data.cognicaPrediction} hasError=${data.hasError} msg=${data.errorMessage || '(none)'}`);
+                        const newOutcome = { status: 'fulfilled', value: { ...data, evaluatedFacts: updatedFacts } };
+                        const newCard   = buildResultCard(dp, newOutcome, freshPatientData);
+                        card.replaceWith(newCard);
+                        attachTraceHandlers();
+                        attachTellMoreHandlers();
+                    } catch (err) {
+                        this.disabled  = false;
+                        this.textContent = 'Update answer';
+                        console.error('[UpdateAnswer] failed:', err);
+                    }
+                });
+            });
+        }
+
+        // Returns { label, priorityNote } where priorityNote is a tiebreaker sentence or null.
+        function extractConclusion(rawExplanation, dp, prediction) {
+            const _quoteChars = String.fromCharCode(34, 39, 8216, 8217, 8220, 8221);
+            const wrap = (label, priorityNote = null) => ({ label, priorityNote });
+
+            if (prediction === 'MAYBE') {
+                const exp = rawExplanation || '';
+                // Conclusions may be quoted (“Use score2”) or unquoted (Low to very high risk).
+                // [_quoteChars]? skips an optional opening quote before capturing.
+                const _reMain  = new RegExp('supports the (?:[\\w\\s]*?)conclusion[,\\s]+[' + _quoteChars + ']?([^' + _quoteChars + '\\.\\n]+)', 'i');
+                const _reEqual = new RegExp('supports equally strongly the (?:complimentary|complementary) conclusion[,\\s]+[' + _quoteChars + ']?([^' + _quoteChars + '\\.\\n]+)', 'i');
+                const mMain  = exp.match(_reMain);
+                const mEqual = exp.match(_reEqual);
+                if (mMain && mEqual) {
+                    const toKey   = raw => raw.trim().toLowerCase().replace(/\s+/g, '_');
+                    const toLabel = raw => CONCLUSION_LABELS[toKey(raw)] || raw.trim();
+
+                    // Prefer the conclusion supported by actual given facts over assumptions only.
+                    // Walk back from each “supports” verb to the start of its sentence (last '.')
+                    // so we only check the context that belongs to that conclusion.
+                    const expLower       = exp.toLowerCase();
+                    const mainVerbIdx    = expLower.indexOf('supports the');
+                    const equalVerbIdx   = expLower.indexOf('supports equally strongly');
+                    const mainSentStart  = mainVerbIdx  >= 0 ? (exp.lastIndexOf('.', mainVerbIdx)  + 1) : 0;
+                    const equalSentStart = equalVerbIdx >= 0 ? (exp.lastIndexOf('.', equalVerbIdx) + 1) : 0;
+                    const segMain        = mainVerbIdx  >= 0 ? exp.substring(mainSentStart,  mainVerbIdx)  : '';
+                    const segEqual       = equalVerbIdx >= 0 ? exp.substring(equalSentStart, equalVerbIdx) : '';
+                    const mainHasData    = /given\s+fact/i.test(segMain);
+                    const equalHasData   = /given\s+fact/i.test(segEqual);
+                    if (mainHasData && !equalHasData)  return wrap(toLabel(mMain[1]));
+                    if (equalHasData && !mainHasData)  return wrap(toLabel(mEqual[1]));
+
+                    // Both or neither backed by given facts — fall back to priority list.
+                    const picked = pickByPriority(dp.name, [toKey(mMain[1]), toKey(mEqual[1])]);
+                    if (picked) {
+                        const pickedLabel = CONCLUSION_LABELS[picked] || picked.replace(/_/g, ' ');
+                        const otherRaw    = toKey(mMain[1]) === picked ? mEqual[1] : mMain[1];
+                        const otherLabel  = CONCLUSION_LABELS[toKey(otherRaw)] || otherRaw.trim();
+                        return wrap(pickedLabel, 'While ' + otherLabel + ' and ' + pickedLabel + ' are both supported, ' + pickedLabel + ' takes priority.');
+                    }
+                    return wrap('Unsure — either ' + toLabel(mMain[1]) + ' or ' + toLabel(mEqual[1]));
+                }
+                return wrap('Unsure');
+            }
+
+            // Match ASCII “ and all common curly quote variants Cognica may use in explanations.
+            // Built with new RegExp so the Edit tool cannot silently convert quote chars.
+            const _reSupportedConclusion = new RegExp(
+                'supports the (?:[\\w\\s]*?)conclusion[,\\s]+[' + _quoteChars + ']([^' + _quoteChars + '\\n]+)',
+                'i'
+            );
+            const m = (rawExplanation || '').match(_reSupportedConclusion);
+            const conclusionRaw = m ? m[1].trim() : null;
+            const conclusionKey = conclusionRaw ? conclusionRaw.toLowerCase().replace(/\s+/g, '_') : null;
+            const complementaryOptions = safeParseJson(dp.complementaryOptionsJson, []);
+            const predLower = (prediction || '').toLowerCase().trim();
+            const candidates = [conclusionKey, predLower, (dp.query||'').toLowerCase(), (complementaryOptions[0]||'').toLowerCase()];
+            for (const c of candidates) {
+                if (c && CONCLUSION_LABELS[c]) return wrap(CONCLUSION_LABELS[c]);
+            }
+            if (conclusionRaw) return wrap(conclusionRaw);
+            if (predLower && !['yes','no','maybe','unknown',''].includes(predLower)) {
+                return wrap(predLower.replace(/_/g, ' '));
+            }
+            return wrap(prediction);
+        }
+
+        // ── Shared utilities ─────────────────────────────────────────────────
+        function safeParseJson(jsonText, fallback) {
+            if (!jsonText) return fallback;
+            try { return JSON.parse(jsonText); } catch { return fallback; }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
+        // Escapes HTML then bolds anything that was in quotes (straight or curly, single or double).
+        // Uses String.fromCharCode for quote chars to prevent edit-tool corruption.
+        function formatExplanation(text) {
+            if (!text) return '';
+            const SQ  = String.fromCharCode(39);    // '  straight single
+            const DQ  = String.fromCharCode(34);    // “  straight double
+            const LSQ = String.fromCharCode(8216);  // ‘ left curly single
+            const RSQ = String.fromCharCode(8217);  // ’ right curly single
+            const LSQ2= String.fromCharCode(8218);  // ‚ low-9 single
+            const LDQ = String.fromCharCode(8220);  // “ left curly double
+            const RDQ = String.fromCharCode(8221);  // ” right curly double
+            const LDQ2= String.fromCharCode(8222);  // „ low-9 double
+            const open  = '[' + LDQ + LDQ2 + ']';
+            const close = '[' + RDQ + LDQ2 + ']';
+            const oSQ   = '[' + LSQ + LSQ2 + ']';
+            const cSQ   = '[' + RSQ + ']';
+            const repl  = '<strong class=”factor”>$1</strong>';
+            return escapeHtml(text)
+                .replace(new RegExp(open  + '([^\\n]+?)' + close, 'g'), repl)
+                .replace(new RegExp(oSQ   + '([^\\n]+?)' + cSQ,   'g'), repl)
+                .replace(new RegExp(DQ    + '([^' + DQ + '\\n]+?)' + DQ, 'g'), repl)
+                .replace(new RegExp(SQ    + '([^' + SQ + '\\n]+?)' + SQ, 'g'), repl);
+        }
+
+        // ── Vitals reactive behaviour ────────────────────────────────────────
+        const htCheckbox      = document.getElementById('cond-hypertension');
+        const obesityCheckbox = document.getElementById('cond-obesity');
+        const bmiRow          = document.getElementById('bmi-row');
+        const bpSectionLabel  = document.getElementById('bp-section-label');
+        const bpSysEl         = document.getElementById('bp-systolic');
+        const bpDiaEl         = document.getElementById('bp-diastolic');
+        const bmiEl           = document.getElementById('bmi');
+
+        function syncBmiRow() {
+            bmiRow.style.display = obesityCheckbox.checked ? 'none' : '';
+        }
+
+        function syncBpLabel() {
+            bpSectionLabel.textContent = htCheckbox.checked
+                ? 'Blood pressure for treatment grading'
+                : 'Enter blood pressure to check for hypertension';
+        }
+
+        function checkBpForHypertension() {
+            if (htCheckbox.checked) return;
+            const sys = parseInt(bpSysEl.value);
+            const dia = parseInt(bpDiaEl.value);
+            if ((sys >= 140) || (dia >= 90)) {
+                htCheckbox.checked = true;
+                syncBpLabel();
+            }
+        }
+
+        function checkBmiForObesity() {
+            if (obesityCheckbox.checked) return;
+            const bmi = parseFloat(bmiEl.value);
+            if (bmi >= 30) {
+                obesityCheckbox.checked = true;
+                syncBmiRow();
+            }
+        }
+
+        htCheckbox.addEventListener('change', syncBpLabel);
+        obesityCheckbox.addEventListener('change', syncBmiRow);
+        bpSysEl.addEventListener('input', checkBpForHypertension);
+        bpDiaEl.addEventListener('input', checkBpForHypertension);
+        bmiEl.addEventListener('input', checkBmiForObesity);
+
+        // Auto-save patient form to localStorage on any change
+        [patientNameEl, patientAgeEl, patientSexEl, clinicalNotesEl,
+         bpSysEl, bpDiaEl, bmiEl].forEach(el => {
+            el.addEventListener('input',  savePatientToStorage);
+            el.addEventListener('change', savePatientToStorage);
+        });
+        document.querySelectorAll('input[type="checkbox"][id^="cond-"], input[type="checkbox"][id^="risk-"], input[type="checkbox"][id^="hist-"]')
+            .forEach(cb => cb.addEventListener('change', savePatientToStorage));
+
+        // Set initial state
+        syncBmiRow();
+        syncBpLabel();
+
+        // Restore any previously saved patient data, then load DPs
+        restorePatientFromStorage();
+        loadStoredRequests();
+    </script>
+</body>
+</html>

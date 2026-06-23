@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cognica Query Center</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .quick-query-panel {
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      background: var(--paper);
+      padding: 20px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      min-height: 460px;
+    }
+
+    .quick-query-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .quick-query-header h2 {
+      margin: 0;
+    }
+
+    .quick-query-heading-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .quick-query-actions {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+      margin-top: auto;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .quick-query-actions .execute-btn {
+      width: auto;
+      flex: 1 1 48%;
+      min-width: 140px;
+      margin-top: 0;
+    }
+
+    .quick-query-actions .execute-btn {
+      width: auto;
+      flex: 1 1 calc(50% - 5px);
+      min-width: 140px;
+      margin-top: 0;
+    }
+
+    .quick-query-selection-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .dp-select-box {
+      width: 100%;
+      max-width: 320px;
+      min-width: 0;
+    }
+
+    .selected-dp-label {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 10px;
+    }
+
+    .query-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .stored-requests-panel,
+    .query-detail-panel {
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      background: var(--paper);
+      padding: 20px;
+    }
+
+    .request-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 540px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-width: 0;
+    }
+
+    .request-item {
+      padding: 12px;
+      border: 1px solid rgba(67, 83, 97, 0.2);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 180ms ease;
+      background: rgba(255, 255, 255, 0.5);
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .request-item:hover {
+      background: rgba(58, 103, 196, 0.08);
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+
+    .request-item.active {
+      background: var(--ok-bg);
+      border-color: var(--ok-border);
+      font-weight: 600;
+    }
+
+    .request-item.match-highlight {
+      background: rgba(255, 243, 205, 0.85);
+      border-color: #c49b2e;
+      box-shadow: inset 0 0 0 1px rgba(196, 155, 46, 0.18);
+    }
+
+    .request-item-name {
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 4px;
+      overflow-wrap: anywhere;
+    }
+
+    .request-item-meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+      display: grid;
+      gap: 3px;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(67, 83, 97, 0.1);
+    }
+
+    .detail-section:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .detail-content,
+    .query-input-box {
+      padding: 12px;
+      background: rgba(239, 245, 251, 0.78);
+      border-radius: var(--radius-sm);
+      color: var(--ink);
+      word-break: break-word;
+      font-size: 0.95rem;
+      border: 1px solid rgba(62, 76, 92, 0.18);
+    }
+
+    .detail-content {
+      white-space: pre-wrap;
+      font-family: 'Monaco', 'Courier New', monospace;
+      max-height: 170px;
+      overflow-y: auto;
+    }
+
+    .query-input-box {
+      width: 100%;
+      min-height: 88px;
+      resize: vertical;
+      font-family: "Manrope", "Segoe UI", Tahoma, sans-serif;
+    }
+
+    .options-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .option-badge {
+      display: inline-block;
+      padding: 6px 11px;
+      background: rgba(58, 103, 196, 0.12);
+      border: 1px solid rgba(44, 79, 155, 0.2);
+      border-radius: 999px;
+      color: #1f3155;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .option-badge.clickable-option {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .option-badge.clickable-option:hover {
+      background: rgba(58, 103, 196, 0.25);
+      border-color: rgba(44, 79, 155, 0.4);
+      transform: scale(1.05);
+    }
+
+    .option-badge.clickable-option:active {
+      transform: scale(0.98);
+    }
+
+    .facts-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .facts-table th,
+    .facts-table td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(67, 83, 97, 0.15);
+    }
+
+    .facts-table th {
+      background: rgba(239, 245, 251, 0.78);
+      font-weight: 700;
+      color: #22344a;
+      font-size: 0.9rem;
+    }
+
+    .fact-true {
+      color: #2c5e2e;
+      font-weight: 700;
+    }
+
+    .fact-false {
+      color: #9c2f2f;
+      font-weight: 700;
+    }
+
+    .fact-unknown {
+      color: #8b5a12;
+      font-weight: 700;
+    }
+
+    .execute-btn {
+      padding: 12px 24px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 180ms ease;
+      width: 100%;
+      margin-top: 16px;
+    }
+
+    .execute-btn:hover:not(:disabled) {
+      background: var(--accent-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(58, 103, 196, 0.2);
+    }
+
+    .execute-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .execute-btn.secondary {
+      background: rgba(33, 110, 255, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(33, 110, 255, 0.2);
+    }
+
+    .execute-btn.secondary:hover:not(:disabled) {
+      background: rgba(33, 110, 255, 0.16);
+    }
+
+    .quick-query-selection-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .dp-select-box {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid rgba(62, 76, 92, 0.18);
+      border-radius: var(--radius-sm);
+      background: rgba(239, 245, 251, 0.88);
+      color: var(--ink);
+      font-size: 0.95rem;
+      min-width: 0;
+    }
+
+    .selected-dp-badge {
+      margin-top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      background: rgba(220, 234, 250, 0.4);
+      color: #1f3f76;
+      font-weight: 700;
+    }
+
+    .selected-dp-badge.selected-dp-badge-active {
+      background: rgba(35, 87, 217, 0.14);
+      border: 1px solid rgba(35, 87, 217, 0.2);
+    }
+
+    .response-section {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(239, 245, 251, 0.78);
+      border-radius: var(--radius-md);
+      border-left: 4px solid var(--ok-border);
+    }
+
+    .response-label {
+      font-weight: 700;
+      color: #22344a;
+      margin-bottom: 10px;
+    }
+
+    .response-content {
+      color: var(--ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+
+    .response-content-verbal {
+      color: #24384f;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      font-family: "Manrope", "Segoe UI", Tahoma, sans-serif;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(62, 76, 92, 0.18);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+
+    .final-answer-banner {
+      margin: 2px 0 14px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(62, 76, 92, 0.2);
+      background: rgba(255, 255, 255, 0.78);
+      text-align: left;
+    }
+
+    .final-answer-text {
+      display: block;
+      font-size: clamp(1.9rem, 4.8vw, 3.2rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .final-answer-yes {
+      color: #1f6f3a;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .final-answer-no {
+      color: #9c2f2f;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .final-answer-maybe {
+      color: #8b5a12;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .toggle-response-btn {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 180ms ease, transform 180ms ease;
+      width: fit-content;
+    }
+
+    .toggle-response-btn:hover {
+      background: var(--accent-strong);
+      transform: translateY(-1px);
+    }
+
+    .raw-response-panel {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(248, 249, 252, 0.95);
+      border: 1px solid rgba(62, 76, 92, 0.18);
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: var(--ink);
+    }
+
+    .raw-response-panel.active {
+      display: block;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .timeline-step {
+      border: 1px solid rgba(62, 76, 92, 0.2);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.7);
+      padding: 10px 12px;
+    }
+
+    .timeline-step-title {
+      font-weight: 700;
+      color: #1f3155;
+      margin-bottom: 6px;
+    }
+
+    .timeline-step-line {
+      color: #2a3f57;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+      word-break: break-word;
+    }
+
+    .status-applied {
+      color: #2c5e2e;
+      font-weight: 700;
+    }
+
+    .status-no-definite-answer,
+    .status-skipped,
+    .status-update-failed {
+      color: #8b4513;
+      font-weight: 700;
+    }
+
+    .related-dps-panel {
+      margin-top: 10px;
+    }
+
+    .related-dp-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .related-dp-row {
+      display: grid;
+      gap: 6px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      background: rgba(58, 103, 196, 0.06);
+      border: 1px solid rgba(58, 103, 196, 0.18);
+    }
+
+    .related-dp-name {
+      font-weight: 700;
+      color: #1f3f76;
+    }
+
+    .related-dp-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .related-dp-tag {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(44, 79, 155, 0.12);
+      color: #1f3155;
+      font-size: 0.85rem;
+      border: 1px solid rgba(44, 79, 155, 0.18);
+    }
+
+    .empty-state {
+      color: var(--muted);
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    @media (max-width: 1200px) {
+      .query-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Modal Styles */
+    .assumption-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .assumption-modal-backdrop.active {
+      display: flex;
+    }
+
+    .assumption-modal {
+      background: var(--paper);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      max-width: 500px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .assumption-modal h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: var(--ink);
+      font-size: 1.3rem;
+    }
+
+    .assumption-modal-question {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .assumption-modal-progress {
+      margin-top: -12px;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .assumption-modal-saved {
+      margin-top: 14px;
+      min-height: 22px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      background: rgba(58, 103, 196, 0.08);
+      color: var(--ink);
+      font-size: 0.9rem;
+    }
+
+    .assumption-variable {
+      color: var(--accent);
+      font-weight: 700;
+      font-family: monospace;
+      font-size: 1.1rem;
+    }
+
+    .assumption-modal-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .assumption-modal-button {
+      padding: 12px 20px;
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 180ms ease;
+    }
+
+    .assumption-modal-button:hover {
+      transform: translateY(-2px);
+    }
+
+    .assumption-modal-button.true {
+      background: #4caf50;
+      color: white;
+      border-color: #45a049;
+    }
+
+    .assumption-modal-button.true:hover {
+      background: #45a049;
+    }
+
+    .assumption-modal-button.false {
+      background: #f44336;
+      color: white;
+      border-color: #da190b;
+    }
+
+    .assumption-modal-button.false:hover {
+      background: #da190b;
+    }
+
+    .assumption-modal-button.unknown {
+      background: #9e9e9e;
+      color: white;
+      border-color: #757575;
+    }
+
+    .assumption-modal-button.unknown:hover {
+      background: #757575;
+    }
+
+    .assumption-modal-button:active {
+      transform: translateY(0);
+    }
+
+    /* ── Fact toggle buttons (interactive facts table) ─────────────────── */
+    .fact-toggle-group {
+      display: inline-flex;
+      gap: 4px;
+    }
+
+    .fact-toggle-btn {
+      padding: 3px 9px;
+      border-radius: 6px;
+      border: 1.5px solid rgba(62, 76, 92, 0.25);
+      background: rgba(239, 245, 251, 0.7);
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 140ms ease;
+      line-height: 1.4;
+    }
+
+    .fact-toggle-btn:hover {
+      filter: brightness(0.93);
+    }
+
+    .ftog-true.ftog-active {
+      background: #d4edda;
+      border-color: #4caf50;
+      color: #1b5e20;
+    }
+
+    .ftog-unknown.ftog-active {
+      background: #fff3cd;
+      border-color: #c49b2e;
+      color: #6d4c00;
+    }
+
+    .ftog-false.ftog-active {
+      background: #fde0dc;
+      border-color: #f44336;
+      color: #7f1515;
+    }
+
+    .fact-row-modified {
+      background: rgba(255, 243, 205, 0.55) !important;
+    }
+
+    .fact-editor-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .fact-reset-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(62, 76, 92, 0.25);
+      background: rgba(239, 245, 251, 0.9);
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 140ms ease;
+    }
+
+    .fact-reset-btn:hover {
+      background: rgba(218, 230, 246, 0.9);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pending-edits-notice {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #8b5a12;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="assumptionModalBackdrop" class="assumption-modal-backdrop">
+  <div class="assumption-modal">
+    <h3>Missing Information</h3>
+    <div class="assumption-modal-question">
+      I need to know the value of <span class="assumption-variable" id="assumptionVarName">X</span>
+    </div>
+    <div id="assumptionModalProgress" class="assumption-modal-progress"></div>
+    <div class="assumption-modal-buttons">
+      <button class="assumption-modal-button true" onclick="handleAssumptionAnswer(true)">True</button>
+      <button class="assumption-modal-button unknown" onclick="handleAssumptionAnswer('unknown')">Unknown</button>
+      <button class="assumption-modal-button false" onclick="handleAssumptionAnswer(false)">False</button>
+    </div>
+    <div id="assumptionModalSaved" class="assumption-modal-saved"></div>
+  </div>
+</div>
+
+<h1>Cognica Query Center</h1>
+<p style="color: var(--muted); margin-top: -10px; margin-bottom: 8px;">Ask your query directly. Decision-problem browsing is optional.</p>
+<div style="margin-bottom: 20px;">
+  <a href="index.html" style="color: var(--accent); font-weight: 700; text-decoration: none;">← Back to Decision Problem Builder</a>
+</div>
+
+<div class="quick-query-panel">
+  <div class="quick-query-header">
+    <h2>Quick Query</h2>
+    <label class="quick-query-heading-toggle">
+      <input type="checkbox" id="enablePopupsToggle" checked>
+      Show pop-up assumption prompts
+    </label>
+  </div>
+  <textarea id="quickQueryInput" class="query-input-box" placeholder="Enter the fact you would like to know"></textarea>
+  <div class="quick-query-selection-row">
+    <select id="selectedDpSelect" class="dp-select-box" aria-label="Select decision problem to run">
+      <option value="">Choose a decision problem to run directly</option>
+    </select>
+    <button id="clearSelectedDpBtn" class="execute-btn secondary" type="button">Clear selection</button>
+  </div>
+  <div style="margin-top: 12px; color: var(--muted); font-size: 0.9rem;">If you select a decision problem from the list or dropdown, Run Query will use it. Otherwise it will find the best match.</div>
+  <div id="selectedDpBadge" class="selected-dp-badge">No decision problem selected.</div>
+  <div id="selectedDpLabel" class="selected-dp-label">No decision problem selected. Pick one from the list or use Find Best-Matching DP.</div>
+  <div class="quick-query-actions">
+    <button id="runQuickQueryBtn" class="execute-btn">Run Query</button>
+    <button id="findRelevantBtn" class="execute-btn" style="background: #9b7c38;">Find Best-Matching DP</button>
+  </div>
+  <div id="globalResponseContainer"></div>
+</div>
+
+<div class="query-container">
+  <div class="stored-requests-panel">
+    <h2>Saved Decision Problems</h2>
+
+    <div style="margin-bottom: 12px;">
+      <input type="text" id="searchInput" placeholder="Search decision problems..."
+             style="width: 100%; padding: 10px; border: 1px solid rgba(62, 76, 92, 0.25); border-radius: var(--radius-sm);">
+    </div>
+
+    <div id="requestList" class="request-list">
+      <div class="empty-state">
+        <p>Loading decision problems...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="query-detail-panel">
+    <h2>Decision Problem Details</h2>
+
+    <div id="detailsContainer">
+      <div class="empty-state">
+        <p>Select a saved decision problem to inspect it and run a query.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const apiBase = '/api';
+  let allRequests = [];
+  let matchedRequestIds = new Set();
+  let selectedRequest = null;
+  const quickQueryInputEl = document.getElementById('quickQueryInput');
+  const runQuickQueryBtnEl = document.getElementById('runQuickQueryBtn');
+  const findRelevantBtnEl = document.getElementById('findRelevantBtn');
+  const selectedDpSelectEl = document.getElementById('selectedDpSelect');
+  const clearSelectedDpBtnEl = document.getElementById('clearSelectedDpBtn');
+  const selectedDpBadgeEl = document.getElementById('selectedDpBadge');
+  const selectedDpLabelEl = document.getElementById('selectedDpLabel');
+  const globalResponseContainerEl = document.getElementById('globalResponseContainer');
+  const enablePopupsToggleEl = document.getElementById('enablePopupsToggle');
+  let allowPopups = true;
+
+  async function loadStoredRequests() {
+    try {
+      const response = await fetch(`${apiBase}/stored-requests`);
+      if (response.ok) {
+        allRequests = await response.json();
+        matchedRequestIds = new Set();
+        renderRequestList(allRequests);
+      } else {
+        showErrorInList('Failed to load decision problems.');
+      }
+    } catch (error) {
+      console.error('Error loading decision problems:', error);
+      showErrorInList('Error loading decision problems.');
+    }
+  }
+
+  function safeParseJson(jsonText, fallbackValue) {
+    if (!jsonText) {
+      return fallbackValue;
+    }
+
+    try {
+      return JSON.parse(jsonText);
+    } catch (error) {
+      return fallbackValue;
+    }
+  }
+
+  function renderRequestList(requests) {
+    const listContainer = document.getElementById('requestList');
+    const displayRequests = Array.isArray(requests) ? [...requests] : [];
+    listContainer.innerHTML = '';
+
+    if (displayRequests.length === 0) {
+      listContainer.innerHTML = '<div class="empty-state"><p>No saved decision problems yet.</p></div>';
+      populateDpSelectOptions([]);
+      return;
+    }
+
+    displayRequests.forEach(request => {
+      const options = safeParseJson(request.complementaryOptionsJson, []);
+      const facts = safeParseJson(request.factsJson, []);
+      const item = document.createElement('div');
+      item.className = 'request-item'
+        + (selectedRequest?.id === request.id ? ' active' : '')
+        + (matchedRequestIds.has(request.id) ? ' match-highlight' : '');
+      item.innerHTML = `
+        <div class="request-item-name">${escapeHtml(request.name || 'Untitled decision problem')}</div>
+        <div class="request-item-meta">
+          <div>${options.length} option${options.length === 1 ? '' : 's'} · ${facts.length} fact${facts.length === 1 ? '' : 's'}</div>
+          <div>Updated: ${formatDate(request.updatedAt)}</div>
+        </div>
+      `;
+      item.addEventListener('click', () => selectRequest(request));
+      listContainer.appendChild(item);
+    });
+    populateDpSelectOptions(displayRequests);
+  }
+
+  function selectRequest(request) {
+    selectedRequest = request;
+    renderRequestList(reorderRequestsByMatches(allRequests, matchedRequestIds));
+    showRequestDetails(request);
+    updateSelectedDpControls();
+  }
+
+  function reorderRequestsByMatches(baseRequests, matchedRequestsOrIds) {
+    const matchIds = matchedRequestsOrIds instanceof Set
+      ? matchedRequestsOrIds
+      : new Set((matchedRequestsOrIds || []).map(request => request.id));
+    const matchedFirst = [];
+    const others = [];
+
+    (baseRequests || []).forEach(request => {
+      if (matchIds.has(request.id)) {
+        matchedFirst.push(request);
+      } else {
+        others.push(request);
+      }
+    });
+
+    return [...matchedFirst, ...others];
+  }
+
+  function highlightAndPrioritizeMatches(matchedRequests) {
+    matchedRequestIds = new Set((matchedRequests || []).map(request => request.id));
+    renderRequestList(reorderRequestsByMatches(allRequests, matchedRequestIds));
+  }
+
+  function clearMatchedHighlights() {
+    matchedRequestIds = new Set();
+    renderRequestList(allRequests);
+  }
+
+  function updateSelectedDpLabel() {
+    if (!selectedRequest) {
+      selectedDpLabelEl.textContent = 'No decision problem selected. Pick one from the list or use Find Best-Matching DP.';
+      return;
+    }
+
+    selectedDpLabelEl.textContent = `Using decision problem: ${selectedRequest.name || 'Untitled decision problem'}`;
+  }
+
+  function updateSelectedDpBadge() {
+    if (!selectedRequest) {
+      selectedDpBadgeEl.textContent = 'No decision problem selected.';
+      selectedDpBadgeEl.classList.remove('selected-dp-badge-active');
+      return;
+    }
+
+    selectedDpBadgeEl.textContent = `Selected DP: ${selectedRequest.name || 'Untitled decision problem'}`;
+    selectedDpBadgeEl.classList.add('selected-dp-badge-active');
+  }
+
+  function populateDpSelectOptions(requests) {
+    if (!selectedDpSelectEl) {
+      return;
+    }
+
+    selectedDpSelectEl.innerHTML = '<option value="">Choose a decision problem to run directly</option>';
+    (Array.isArray(requests) ? requests : []).forEach(request => {
+      const option = document.createElement('option');
+      option.value = String(request.id);
+      option.textContent = request.name || 'Untitled decision problem';
+      if (selectedRequest && Number(selectedRequest.id) === Number(request.id)) {
+        option.selected = true;
+      }
+      selectedDpSelectEl.appendChild(option);
+    });
+  }
+
+  function updateSelectedDpControls() {
+    updateSelectedDpLabel();
+    updateSelectedDpBadge();
+    populateDpSelectOptions(allRequests);
+  }
+
+  function clearSelectedRequest() {
+    selectedRequest = null;
+    renderRequestList(reorderRequestsByMatches(allRequests, matchedRequestIds));
+    updateSelectedDpControls();
+  }
+
+  function showRequestDetails(request) {
+    const container = document.getElementById('detailsContainer');
+    const suggestedQuery = (request.query || '').trim();
+
+    pendingFactEdits.clear();
+    container.innerHTML = window.cognicaUI.buildDecisionProblemDetailsHtml(request, true);
+
+    if (!quickQueryInputEl.value.trim() && suggestedQuery) {
+      quickQueryInputEl.value = suggestedQuery;
+    }
+
+    attachClickableOptionListeners();
+  }
+
+  function attachClickableOptionListeners() {
+    const optionBadges = document.querySelectorAll('.option-badge.clickable-option');
+    optionBadges.forEach(badge => {
+      badge.addEventListener('click', function() {
+        const optionText = this.getAttribute('data-option');
+        if (optionText) {
+          quickQueryInputEl.value = optionText;
+          quickQueryInputEl.focus();
+        }
+      });
+    });
+  }
+
+  async function executeStoredRequest(requestId, queryText, buttonEl) {
+    const enableManualPrompt = arguments.length < 4 ? true : !!arguments[3];
+
+    if (!queryText) {
+      showExecutionError('Enter a query before executing this decision problem.');
+      return;
+    }
+
+    buttonEl.disabled = true;
+    buttonEl.textContent = 'Executing...';
+
+    try {
+      const response = await fetch(`${apiBase}/stored-requests/${requestId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ query: queryText })
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to execute decision problem.';
+        try {
+          const errorBody = await response.json();
+          if (errorBody.error) {
+            errorMessage = errorBody.error;
+          }
+        } catch (error) {
+        }
+        showExecutionError(errorMessage);
+        return;
+      }
+
+      const result = await response.json();
+      showExecutionResult(result);
+
+      if (enableManualPrompt && allowPopups) {
+        await promptForMissingAssumptionsIfNeeded(result, queryText);
+      }
+    } catch (error) {
+      console.error('Error executing decision problem:', error);
+      showExecutionError('Error executing decision problem: ' + error.message);
+    } finally {
+      buttonEl.disabled = false;
+      buttonEl.textContent = 'Execute Query';
+    }
+  }
+
+  async function runQuickQuery() {
+    const queryText = quickQueryInputEl.value.trim();
+    if (!queryText) {
+      showExecutionError('Enter a query first.');
+      return;
+    }
+
+    if (selectedRequest) {
+      const saved = await saveAndFlushPendingEdits();
+      if (!saved) return;
+      await executeStoredRequest(selectedRequest.id, queryText, runQuickQueryBtnEl);
+      return;
+    }
+
+    const matched = await findRelevantDecisionProblems(queryText);
+    if (matched.length > 0) {
+      highlightAndPrioritizeMatches(matched);
+      selectRequest(matched[0]);
+    } else {
+      clearMatchedHighlights();
+      selectedRequest = null;
+      updateSelectedDpLabel();
+    }
+
+    if (!selectedRequest) {
+      showExecutionError('No complementary-option match found. Click "Find Best-Matching DP" or select a decision problem manually.');
+      return;
+    }
+
+    await executeStoredRequest(selectedRequest.id, queryText, runQuickQueryBtnEl);
+  }
+
+  function showExecutionResult(result) {
+    const responseData = result.response?.body || result.response;
+    const prediction = String(responseData?.cognicaPrediction || '').trim().toLowerCase();
+    const normalizedAnswer = prediction === 'yes'
+      ? 'Yes'
+      : prediction === 'no'
+        ? 'No'
+        : 'Maybe';
+    const answerClass = normalizedAnswer === 'Yes'
+      ? 'final-answer-yes'
+      : normalizedAnswer === 'No'
+        ? 'final-answer-no'
+        : 'final-answer-maybe';
+    const hasQueryingMessage = !!(result.queryingMessage && String(result.queryingMessage).trim());
+    const hasQueryingResult = !!result.queryingResult;
+    const relatedDpsHtml = buildRelatedDpHtml(result.autoResolutionSteps || []);
+    const timelineHtml = renderAutoResolutionTimeline(result.autoResolutionSteps || []);
+    const verbalExplanation = buildVerbalExplanation(result);
+
+    globalResponseContainerEl.innerHTML = `
+      <div class="response-section">
+        <div class="response-label">Execution Result</div>
+        ${selectedRequest ? `<div class="response-content" style="margin-bottom: 10px; font-weight: 700; color: #1f3155;">Query executed on ${escapeHtml(selectedRequest.name || 'selected decision problem')}</div>` : ''}
+
+        <div class="final-answer-banner">
+          <span class="final-answer-text ${answerClass}">${normalizedAnswer}</span>
+        </div>
+
+        <div class="response-label" style="margin-top: 10px;">Verbal Explanation</div>
+        <div class="response-content-verbal">${escapeHtml(verbalExplanation)}</div>
+
+        ${hasQueryingMessage ? `
+          <div class="response-label" style="margin-top: 10px;">Follow-up Query</div>
+          <div class="response-content">${escapeHtml(result.queryingMessage)}</div>
+        ` : ''}
+
+        ${hasQueryingResult ? `
+          <div class="response-label" style="margin-top: 10px;">What I Got</div>
+          <div class="response-content">${escapeHtml(JSON.stringify(result.queryingResult, null, 2))}</div>
+        ` : ''}
+
+        ${!allowPopups && Array.isArray(result.autoResolutionSteps) && result.autoResolutionSteps.length > 0 ? `
+          <div class="response-label" style="margin-top: 10px;">Quiet Mode Summary</div>
+          <div class="response-content">Pop-up assumption prompts are disabled, so missing assumptions were handled without interrupting you.</div>
+        ` : ''}
+
+        ${relatedDpsHtml}
+
+        ${timelineHtml ? `
+          <div class="response-label" style="margin-top: 10px;">Auto-Resolution Timeline</div>
+          ${timelineHtml}
+        ` : ''}
+
+        <button type="button" class="toggle-response-btn" id="toggleResponseBtn" onclick="toggleRawResponse()">Show full API response</button>
+        <div class="raw-response-panel" id="rawResponsePanel">${escapeHtml(JSON.stringify({
+          executedQuery: result.executedQuery,
+          response: responseData
+        }, null, 2))}</div>
+      </div>
+    `;
+  }
+
+  function showExecutionError(message) {
+    globalResponseContainerEl.innerHTML = `
+      <div class="response-section" style="border-left-color: #d1735e;">
+        <div class="response-label" style="color: #8b4513;">Error</div>
+        <div class="response-content">${escapeHtml(message)}</div>
+      </div>
+    `;
+  }
+
+  function showErrorInList(message) {
+    const listContainer = document.getElementById('requestList');
+    listContainer.innerHTML = `<div class="empty-state"><p>${escapeHtml(message)}</p></div>`;
+  }
+
+  function buildRelatedDpHtml(steps) {
+    if (!Array.isArray(steps) || steps.length === 0) {
+      return '';
+    }
+
+    const dpEntries = new Map();
+    steps.forEach(step => {
+      const dpName = step?.assumptionDpName || step?.requesterDpName || step?.assumptionDpId || step?.requesterDpId;
+      const query = normalizeFactName(step?.assumptionQuery || '');
+      if (!dpName) {
+        return;
+      }
+      const key = String(dpName);
+      if (!dpEntries.has(key)) {
+        dpEntries.set(key, new Set());
+      }
+      if (query) {
+        dpEntries.get(key).add(query);
+      }
+    });
+
+    if (dpEntries.size === 0) {
+      return '';
+    }
+
+    const rows = Array.from(dpEntries.entries()).map(([dpName, queries]) => `
+      <div class="related-dp-row">
+        <div class="related-dp-name">${escapeHtml(dpName)}</div>
+        <div class="related-dp-tags">${Array.from(queries).map(q => `<span class="related-dp-tag">${escapeHtml(q)}</span>`).join('')}</div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="related-dps-panel">
+        <div class="response-label" style="margin-top: 10px;">Related Decision Problems</div>
+        <div class="related-dp-list">${rows}</div>
+      </div>
+    `;
+  }
+
+  function renderAutoResolutionTimeline(steps) {
+    if (!Array.isArray(steps) || steps.length === 0) {
+      return '';
+    }
+
+    const stepHtml = steps.map((step, index) => {
+      const status = step?.status || 'unknown';
+      const dpName = step?.assumptionDpName || 'N/A';
+      const query = step?.assumptionQuery || 'N/A';
+      const reason = step?.reason || '';
+      const prediction = step?.assumptionResponse?.cognicaPrediction || 'N/A';
+      const updatedValue = typeof step?.updatedFactValue === 'boolean'
+        ? (step.updatedFactValue ? 'true' : 'false')
+        : 'N/A';
+
+      return `
+        <div class="timeline-step">
+          <div class="timeline-step-title">Step ${index + 1}: ${escapeHtml(query)}</div>
+          <div class="timeline-step-line"><strong>DP:</strong> ${escapeHtml(dpName)}</div>
+          <div class="timeline-step-line"><strong>Status:</strong> <span class="status-${escapeHtml(status)}">${escapeHtml(status)}</span></div>
+          <div class="timeline-step-line"><strong>Prediction:</strong> ${escapeHtml(prediction)}</div>
+          <div class="timeline-step-line"><strong>Applied Value:</strong> ${escapeHtml(updatedValue)}</div>
+          ${reason ? `<div class="timeline-step-line"><strong>Reason:</strong> ${escapeHtml(reason)}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    return `<div class="timeline">${stepHtml}</div>`;
+  }
+
+  function toSentence(value) {
+    const text = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+    if (!text) {
+      return '';
+    }
+
+    return /[.!?]$/.test(text) ? text : `${text}.`;
+  }
+
+  function equalsIgnoreCaseTrim(a, b) {
+    return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+  }
+
+  function collectApiExplanationTexts(result) {
+    const texts = [];
+    const maybePush = value => {
+      const normalized = toSentence(value);
+      if (normalized && !texts.some(existing => equalsIgnoreCaseTrim(existing, normalized))) {
+        texts.push(normalized);
+      }
+    };
+
+    const steps = Array.isArray(result?.autoResolutionSteps) ? result.autoResolutionSteps : [];
+    steps.forEach(step => {
+      maybePush(step?.assumptionResponse?.cognicaSummaryExplanation);
+      maybePush(step?.assumptionResponse?.summaryExplanation);
+      maybePush(step?.reason);
+    });
+
+    maybePush(result?.prevalentExplanation);
+    maybePush(result?.response?.cognicaSummaryExplanation);
+    maybePush(result?.initialResponse?.cognicaSummaryExplanation);
+    maybePush(result?.rerunResponse?.cognicaSummaryExplanation);
+
+    return texts;
+  }
+
+  function buildIterativeExplanationLines(result) {
+    const response = result?.response || {};
+    const steps = Array.isArray(result?.autoResolutionSteps) ? result.autoResolutionSteps : [];
+    const unresolved = getUnresolvedAssumptions(result);
+    const lines = [];
+    const executedQuery = toSentence(result?.executedQuery || '').replace(/[.]$/, '');
+    const sourceName = result?.name || 'the selected decision problem';
+
+    lines.push(`I evaluated query "${executedQuery}" on "${sourceName}".`);
+
+    if (steps.length > 0) {
+      const stepExplanations = steps.map(step =>
+        toSentence(
+          step?.assumptionResponse?.cognicaSummaryExplanation
+          || step?.assumptionResponse?.summaryExplanation
+          || step?.reason
+        )
+      ).filter(Boolean);
+
+      if (stepExplanations.length > 0) {
+        lines.push('The resolution process included the following explanations:');
+        lines.push(...stepExplanations);
+      }
+    }
+
+    const finalExplanation = toSentence(result?.prevalentExplanation || response?.cognicaSummaryExplanation);
+    if (finalExplanation) {
+      lines.push(finalExplanation);
+    }
+
+    if (unresolved.length > 0) {
+      lines.push(`Remaining unknowns: ${unresolved.join(', ')}.`);
+    }
+
+    return lines;
+  }
+
+  function buildVerbalExplanation(result) {
+    const lines = buildIterativeExplanationLines(result);
+    const apiExplanations = collectApiExplanationTexts(result);
+    const allLines = [...lines];
+
+    apiExplanations.forEach(entry => {
+      if (!allLines.some(existing => equalsIgnoreCaseTrim(existing, entry))) {
+        allLines.push(entry);
+      }
+    });
+
+    const finalText = allLines.join('\n');
+    result.iterativeVerbalExplanation = finalText;
+    return finalText;
+  }
+
+  function extractAssumptionsFromExplanation(explanation) {
+    if (!explanation || !String(explanation).trim()) {
+      return [];
+    }
+
+    const text = String(explanation);
+    const found = new Set();
+
+    // Pattern 1: "assumption(s)...holds" with quoted text
+    const quotedPattern = /assumption(?:\(s\))?.*?holds/ig;
+    if (quotedPattern.test(text)) {
+      const quoteMatcher = /["']([^"']+)["']/g;
+      let qMatch;
+      while ((qMatch = quoteMatcher.exec(text)) !== null) {
+        const token = (qMatch[1] || '').trim();
+        if (token) {
+          found.add(token);
+        }
+      }
+    }
+
+    // Pattern 2: "assumption(s) X holds"
+    const plainPattern = /assumption(?:\(s\))?\s+([A-Za-z0-9_\- ,]+?)\s+holds/ig;
+    let pMatch;
+    while ((pMatch = plainPattern.exec(text)) !== null) {
+      const segment = (pMatch[1] || '').split(/,|\band\b/i);
+      segment.forEach(part => {
+        const token = String(part || '').replace(/^[\s'\"]+|[\s'\"]+$/g, '').trim();
+        if (token) {
+          found.add(token);
+        }
+      });
+    }
+
+    // Pattern 3: "assumption of X" or "assumption(s) of X"
+    const ofPattern = /assumption(?:\(s\))?\s+of\s+(?:["'])?([A-Za-z0-9_\- ,]+?)(?:["'])?(?:\s|$|[.,;])/ig;
+    let ofMatch;
+    while ((ofMatch = ofPattern.exec(text)) !== null) {
+      const segment = (ofMatch[1] || '').split(/,|\band\b/i);
+      segment.forEach(part => {
+        const token = String(part || '').replace(/^[\s'\"]+|[\s'\"]+$/g, '').trim();
+        if (token && !found.has(token)) {
+          found.add(token);
+        }
+      });
+    }
+
+    // Pattern 4: Variables in context phrases like "cannot determine X", "need to know X", "must verify X"
+    const contextPattern = /(?:cannot|determine|need|know|verify|require|assume|must|validate|check)\s+(?:\w+\s+)*([A-Za-z])(?:\s|$|[.,;])/ig;
+    let ctxMatch;
+    while ((ctxMatch = contextPattern.exec(text)) !== null) {
+      const token = (ctxMatch[1] || '').trim();
+      // Only capture single uppercase letters as variable names in this context
+      if (token && /^[A-Z]$/.test(token) && !found.has(token)) {
+        found.add(token);
+      }
+    }
+
+    return Array.from(found);
+  }
+
+  function getUnresolvedAssumptions(result) {
+    const steps = Array.isArray(result?.autoResolutionSteps) ? result.autoResolutionSteps : [];
+    const unresolvedStatuses = new Set(['no-definite-answer', 'skipped', 'update-failed', 'resolving-nested']);
+
+    const unresolved = new Set();
+    const applied = new Set();
+
+    // Track which assumptions were attempted in the timeline
+    const timelineAssumptions = new Set();
+
+    steps.forEach(step => {
+      const assumption = String(step?.assumptionQuery || '').trim();
+      if (!assumption) {
+        return;
+      }
+
+      const assumptionLower = assumption.toLowerCase();
+      timelineAssumptions.add(assumptionLower);
+
+      if (step?.status === 'applied') {
+        applied.add(assumptionLower);
+      } else if (unresolvedStatuses.has(step?.status)) {
+        unresolved.add(assumption);
+      }
+    });
+
+    // Extract assumptions from the explanation text
+    const explanation = result?.prevalentExplanation || result?.response?.cognicaSummaryExplanation || '';
+    const fromExplanation = extractAssumptionsFromExplanation(explanation);
+
+    // Only add explanation-derived assumptions when the backend has attempted them
+    // in the timeline. This ensures cross-DP lookup is tried before user prompting.
+    fromExplanation.forEach(a => {
+      const aLower = String(a).toLowerCase();
+      if (timelineAssumptions.has(aLower) && !applied.has(aLower)) {
+        unresolved.add(a);
+      }
+    });
+
+    return Array.from(unresolved).filter(a => !applied.has(String(a).toLowerCase()));
+  }
+
+  let currentAssumptionIndex = 0;
+  let currentAssumptions = [];
+  let currentResult = null;
+  let currentQueryText = '';
+  let currentManualFacts = [];
+  let currentAssumptionTargets = new Map();
+
+  // Tracks unsaved fact edits made via the toggle buttons (index → 'true'/'false'/'unknown')
+  let pendingFactEdits = new Map();
+
+  function setFactToggle(index, newStatus) {
+    if (!selectedRequest) return;
+    const facts = safeParseJson(selectedRequest.factsJson, []);
+    const current = facts[index];
+    if (!current) return;
+    const original = current.factStatus || (current.factHold ? 'true' : 'unknown');
+
+    if (newStatus === original) {
+      pendingFactEdits.delete(index);
+    } else {
+      pendingFactEdits.set(index, newStatus);
+    }
+
+    // Update toggle button active states in the row
+    const row = document.querySelector(`[data-fact-index="${index}"]`);
+    if (row) {
+      row.querySelectorAll('.fact-toggle-btn').forEach(btn => btn.classList.remove('ftog-active'));
+      const activeBtn = row.querySelector(
+        newStatus === 'true' ? '.ftog-true' : newStatus === 'false' ? '.ftog-false' : '.ftog-unknown'
+      );
+      if (activeBtn) activeBtn.classList.add('ftog-active');
+      row.classList.toggle('fact-row-modified', pendingFactEdits.has(index));
+    }
+
+    updatePendingEditsNotice();
+  }
+
+  function resetAllFacts() {
+    if (!selectedRequest) return;
+    const facts = safeParseJson(selectedRequest.factsJson, []);
+    facts.forEach((_, i) => pendingFactEdits.set(i, 'unknown'));
+
+    document.querySelectorAll('[data-fact-index]').forEach(row => {
+      const idx = parseInt(row.getAttribute('data-fact-index'), 10);
+      const original = (facts[idx] || {}).factStatus || 'unknown';
+      row.querySelectorAll('.fact-toggle-btn').forEach(btn => btn.classList.remove('ftog-active'));
+      const btn = row.querySelector('.ftog-unknown');
+      if (btn) btn.classList.add('ftog-active');
+      row.classList.toggle('fact-row-modified', original !== 'unknown');
+    });
+
+    updatePendingEditsNotice();
+  }
+
+  function updatePendingEditsNotice() {
+    const notice = document.getElementById('pendingEditsNotice');
+    if (notice) {
+      notice.style.display = pendingFactEdits.size > 0 ? 'inline' : 'none';
+    }
+  }
+
+  async function saveAndFlushPendingEdits() {
+    if (!selectedRequest || pendingFactEdits.size === 0) return true;
+
+    const facts = safeParseJson(selectedRequest.factsJson, []);
+    const updatedFacts = facts.map((f, i) => {
+      const newStatus = pendingFactEdits.get(i);
+      if (newStatus === undefined) return f;
+      return { ...f, factStatus: newStatus, factHold: newStatus === 'true' };
+    });
+
+    const options = safeParseJson(selectedRequest.complementaryOptionsJson, []);
+    const result = await window.cognicaAPI.updateStoredRequest(
+      selectedRequest.id,
+      selectedRequest.name || '',
+      selectedRequest.naturalLanguage || selectedRequest.description || '',
+      selectedRequest.policyInCognicaDPCNL || '',
+      selectedRequest.query || '',
+      options,
+      updatedFacts
+    );
+
+    if (!result.success) {
+      showExecutionError(`Could not save fact changes: ${result.error || 'Unknown error'}`);
+      return false;
+    }
+
+    allRequests = allRequests.map(r => r.id === result.data.id ? result.data : r);
+    selectedRequest = result.data;
+    pendingFactEdits.clear();
+    renderRequestList(allRequests);
+    showRequestDetails(selectedRequest);
+    return true;
+  }
+
+  function getRequestById(id) {
+    return allRequests.find(request => Number(request?.id) === Number(id)) || null;
+  }
+
+  function buildAssumptionTargets(result) {
+    const steps = Array.isArray(result?.autoResolutionSteps) ? result.autoResolutionSteps : [];
+    const targets = new Map();
+
+    steps.forEach(step => {
+      const assumption = normalizeFactName(step?.assumptionQuery);
+      const dpId = step?.requesterDpId ?? step?.assumptionDpId;
+      if (!assumption || dpId == null) {
+        return;
+      }
+
+      targets.set(assumption.toLowerCase(), Number(dpId));
+    });
+
+    return targets;
+  }
+
+  function normalizeAnswerLabel(answer) {
+    if (answer === true) {
+      return 'True';
+    }
+    if (answer === false) {
+      return 'False';
+    }
+    return 'Unknown';
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function normalizeFactName(rawFact) {
+    return String(rawFact || '')
+      .replace(/^[\s'"`]+|[\s'"`]+$/g, '')
+      .replace(/[\s.,;:!?]+$/g, '')
+      .trim();
+  }
+
+  async function handleAssumptionAnswer(answer) {
+    const assumption = normalizeFactName(currentAssumptions[currentAssumptionIndex]);
+    const answerLabel = normalizeAnswerLabel(answer);
+    const targetDpId = currentAssumptionTargets.get(assumption.toLowerCase()) || selectedRequest?.id;
+    const targetDp = getRequestById(targetDpId);
+    const targetDpName = targetDp?.name || 'selected DP';
+    
+    if (answer === true) {
+      currentManualFacts.push({ fact: assumption, factHold: true, factStatus: 'true', targetDpId });
+    } else if (answer === false) {
+      currentManualFacts.push({ fact: assumption, factHold: false, factStatus: 'false', targetDpId });
+    }
+
+    const savedEl = document.getElementById('assumptionModalSaved');
+    if (savedEl) {
+      savedEl.textContent = `Saved: ${assumption} = ${answerLabel} (on ${targetDpName})`;
+    }
+
+    // Keep a short visual confirmation before moving to the next assumption.
+    await sleep(220);
+
+    // Move to next assumption
+    currentAssumptionIndex++;
+    if (currentAssumptionIndex < currentAssumptions.length) {
+      showAssumptionModal(currentAssumptions[currentAssumptionIndex]);
+    } else {
+      // All assumptions handled, apply the facts and rerun the query
+      hideAssumptionModal();
+      await applyManualFactsAndRerun();
+    }
+  }
+
+  function showAssumptionModal(assumption) {
+    document.getElementById('assumptionVarName').textContent = normalizeFactName(assumption);
+    const progressEl = document.getElementById('assumptionModalProgress');
+    if (progressEl) {
+      progressEl.textContent = `Assumption ${currentAssumptionIndex + 1} of ${currentAssumptions.length}`;
+    }
+    const savedEl = document.getElementById('assumptionModalSaved');
+    if (savedEl && currentAssumptionIndex === 0) {
+      savedEl.textContent = '';
+    }
+    document.getElementById('assumptionModalBackdrop').classList.add('active');
+  }
+
+  function hideAssumptionModal() {
+    document.getElementById('assumptionModalBackdrop').classList.remove('active');
+  }
+
+  async function applyManualFactsAndRerun() {
+    if (!selectedRequest || currentManualFacts.length === 0) {
+      globalResponseContainerEl.innerHTML = `
+        <div class="response-section">
+          <div class="response-label">No Facts Applied</div>
+          <div class="response-content">All unresolved assumptions were marked Unknown, so no fact updates were saved.</div>
+        </div>
+      `;
+      currentAssumptionIndex = 0;
+      currentAssumptions = [];
+      currentResult = null;
+      currentQueryText = '';
+      currentManualFacts = [];
+      currentAssumptionTargets = new Map();
+      return;
+    }
+
+    const manualFactsByDp = new Map();
+    currentManualFacts.forEach(manualFact => {
+      const targetDpId = Number(manualFact?.targetDpId || selectedRequest.id);
+      if (!manualFactsByDp.has(targetDpId)) {
+        manualFactsByDp.set(targetDpId, []);
+      }
+      manualFactsByDp.get(targetDpId).push({
+        fact: manualFact.fact,
+        factHold: manualFact.factHold,
+        factStatus: manualFact.factStatus || (manualFact.factHold ? 'true' : 'false')
+      });
+    });
+
+    for (const [dpId, factsForDp] of manualFactsByDp.entries()) {
+      const targetRequest = getRequestById(dpId);
+      if (!targetRequest) {
+        continue;
+      }
+
+      const currentFacts = safeParseJson(targetRequest.factsJson, []);
+      const mergedFacts = upsertFacts(currentFacts, factsForDp);
+      const options = safeParseJson(targetRequest.complementaryOptionsJson, []);
+
+      const updateResult = await window.cognicaAPI.updateStoredRequest(
+        targetRequest.id,
+        targetRequest.name || 'Untitled decision problem',
+        targetRequest.naturalLanguage || targetRequest.description || '',
+        targetRequest.policyInCognicaDPCNL || '',
+        targetRequest.query || '',
+        options,
+        mergedFacts
+      );
+
+      if (!updateResult.success) {
+        showExecutionError(`Could not save manual assumption values on ${targetRequest.name || 'decision problem'}: ${updateResult.error || 'Unknown error'}`);
+        return;
+      }
+
+      allRequests = allRequests.map(req => req.id === updateResult.data.id ? updateResult.data : req);
+      if (Number(selectedRequest.id) === Number(updateResult.data.id)) {
+        selectedRequest = updateResult.data;
+      }
+    }
+
+    renderRequestList(allRequests);
+    showRequestDetails(selectedRequest);
+
+    // Rerun the query with the updated facts
+    await executeStoredRequest(selectedRequest.id, currentQueryText, runQuickQueryBtnEl, false);
+
+    // Reset
+    currentAssumptionIndex = 0;
+    currentAssumptions = [];
+    currentResult = null;
+    currentQueryText = '';
+    currentManualFacts = [];
+    currentAssumptionTargets = new Map();
+  }
+
+  async function promptForMissingAssumptionsIfNeeded(result, queryText) {
+    const unresolved = getUnresolvedAssumptions(result);
+    if (!selectedRequest || unresolved.length === 0) {
+      return;
+    }
+
+    // Store context for the modal to use
+    currentAssumptions = unresolved;
+    currentResult = result;
+    currentQueryText = queryText;
+    currentManualFacts = [];
+    currentAssumptionTargets = buildAssumptionTargets(result);
+    currentAssumptionIndex = 0;
+
+    // Show the first assumption modal
+    showAssumptionModal(currentAssumptions[0]);
+  }
+
+  function upsertFacts(existingFacts, manualFacts) {
+    const merged = Array.isArray(existingFacts) ? [...existingFacts] : [];
+
+    manualFacts.forEach(newFact => {
+      const normalizedNewFact = normalizeFactName(newFact.fact);
+      const idx = merged.findIndex(f => normalizeFactName(f?.fact).toLowerCase() === normalizedNewFact.toLowerCase());
+      if (idx >= 0) {
+        merged[idx] = {
+          ...merged[idx],
+          fact: normalizedNewFact,
+          factHold: newFact.factHold,
+          factStatus: newFact.factStatus || (newFact.factHold ? 'true' : 'false')
+        };
+      } else {
+        merged.push({
+          fact: normalizedNewFact,
+          factHold: newFact.factHold,
+          factStatus: newFact.factStatus || (newFact.factHold ? 'true' : 'false')
+        });
+      }
+    });
+
+    return merged;
+  }
+
+  async function searchRequests(query) {
+    if (!query.trim()) {
+      renderRequestList(reorderRequestsByMatches(allRequests, matchedRequestIds));
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiBase}/stored-requests/search?query=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const results = await response.json();
+        renderRequestList(reorderRequestsByMatches(results, matchedRequestIds));
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    }
+  }
+
+  async function findRelevantDecisionProblems(queryText) {
+    const response = await fetch(`${apiBase}/stored-requests/search-by-query-needs?query=${encodeURIComponent(queryText)}`);
+    if (!response.ok) {
+      return [];
+    }
+    return await response.json();
+  }
+
+  async function searchByQueryNeeds(buttonEl) {
+    const queryText = quickQueryInputEl.value.trim();
+    if (!queryText) {
+      showErrorInList('Enter a query to find relevant decision problems.');
+      return;
+    }
+
+    buttonEl.disabled = true;
+    const originalText = buttonEl.textContent;
+    buttonEl.textContent = 'Searching...';
+
+    try {
+      const results = await findRelevantDecisionProblems(queryText);
+
+      if (results.length > 0) {
+        highlightAndPrioritizeMatches(results);
+        selectRequest(results[0]);
+        globalResponseContainerEl.innerHTML = `
+          <div class="response-section">
+            <div class="response-label">Best Match</div>
+            <div class="response-content">Found ${results.length} matching decision problem(s). They were moved to the top and highlighted. Selected: ${escapeHtml(results[0].name || 'Untitled decision problem')}</div>
+          </div>
+        `;
+      } else {
+        clearMatchedHighlights();
+        showErrorInList('No matching decision problems found for this query.');
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      showErrorInList('Error searching for relevant decision problems.');
+    } finally {
+      buttonEl.disabled = false;
+      buttonEl.textContent = originalText;
+    }
+  }
+
+  function formatDate(value) {
+    if (!value) {
+      return 'Unknown';
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Unknown' : date.toLocaleString();
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : String(text);
+    return div.innerHTML;
+  }
+
+  function toggleRawResponse() {
+    const panel = document.getElementById('rawResponsePanel');
+    const button = document.getElementById('toggleResponseBtn');
+    if (!panel || !button) {
+      return;
+    }
+
+    const isActive = panel.classList.toggle('active');
+    button.textContent = isActive ? 'Hide full API response' : 'Show full API response';
+  }
+
+  document.getElementById('searchInput').addEventListener('input', event => {
+    searchRequests(event.target.value);
+  });
+
+  if (enablePopupsToggleEl) {
+    allowPopups = enablePopupsToggleEl.checked;
+    enablePopupsToggleEl.addEventListener('change', () => {
+      allowPopups = enablePopupsToggleEl.checked;
+    });
+  }
+
+  if (selectedDpSelectEl) {
+    selectedDpSelectEl.addEventListener('change', () => {
+      const selectedId = selectedDpSelectEl.value;
+      if (!selectedId) {
+        clearSelectedRequest();
+        return;
+      }
+      const request = getRequestById(selectedId);
+      if (request) {
+        selectRequest(request);
+      }
+    });
+  }
+
+  if (clearSelectedDpBtnEl) {
+    clearSelectedDpBtnEl.addEventListener('click', () => {
+      clearSelectedRequest();
+    });
+  }
+
+  runQuickQueryBtnEl.addEventListener('click', runQuickQuery);
+  findRelevantBtnEl.addEventListener('click', () => searchByQueryNeeds(findRelevantBtnEl));
+  quickQueryInputEl.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      runQuickQuery();
+    }
+  });
+
+  window.addEventListener('load', loadStoredRequests);
+</script>
+
+</body>
+</html>

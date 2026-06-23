@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cognica Decision Workspace</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>Cognica Decision Workspace</h1>
+
+<!-- Custom Decision Section -->
+<section id="customDecision">
+  <h2>Decision Problem Input</h2>
+
+  <div class="dp-toolbar">
+    <div class="dp-picker-group">
+      <label for="dpSelect">Active Decision Problem</label>
+      <select id="dpSelect"></select>
+    </div>
+    <button type="button" id="newDpBtn">Create New Decision Problem</button>
+  </div>
+
+  <div class="form-group">
+    <label for="dpNameInput">Decision Problem Name</label>
+    <input type="text" id="dpNameInput" placeholder="Rename selected decision problem">
+  </div>
+
+  <div class="dp-options-preview" id="dpOptionsPreview">
+    <strong>Possible options for this DP:</strong>
+    <div id="dpOptionsList" class="option-pills"></div>
+  </div>
+  
+  <div class="form-group">
+    <label for="policyInput">Policy (Cognica DP CNL):</label>
+    <textarea id="policyInput" rows="8" placeholder="Enter policy statements. Line breaks are supported."></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="optionsInput">Complementary Options (comma-separated):</label>
+    <input type="text" id="optionsInput" placeholder="option1, option2, option3">
+  </div>
+
+  <div class="form-group">
+    <label>External Factors:</label>
+    <div id="externalFactorsContainer"></div>
+    <button type="button" id="addExternalFactorBtn">Add External Factor</button>
+  </div>
+  <div class="form-group">
+    <label>Internal Factors:</label>
+    <div id="internalFactorsContainer"></div>
+    <button type="button" id="addInternalFactorBtn">Add Internal Factor</button>
+  </div>
+
+  <div class="form-group">
+    <label for="queryTargetSelect">Ask Query Against Decision Problem</label>
+    <select id="queryTargetSelect"></select>
+  </div>
+
+  <div class="form-group">
+    <label for="queryInput">Query:</label>
+    <input type="text" id="queryInput" placeholder="Enter the query to evaluate">
+  </div>
+
+  <button id="submitQueryBtn">Submit Query</button>
+  <div id="customPredictionResult"></div>
+</section>
+
+<script src="app.js"></script>
+<script>
+  const policyInputEl = document.getElementById('policyInput');
+  const optionsInputEl = document.getElementById('optionsInput');
+  const queryInputEl = document.getElementById('queryInput');
+  const externalFactorsContainerEl = document.getElementById('externalFactorsContainer');
+  const internalFactorsContainerEl = document.getElementById('internalFactorsContainer');
+  const submitBtnEl = document.getElementById('submitQueryBtn');
+  const dpSelectEl = document.getElementById('dpSelect');
+  const queryTargetSelectEl = document.getElementById('queryTargetSelect');
+  const dpNameInputEl = document.getElementById('dpNameInput');
+  const newDpBtnEl = document.getElementById('newDpBtn');
+  const addExternalFactorBtnEl = document.getElementById('addExternalFactorBtn');
+  const addInternalFactorBtnEl = document.getElementById('addInternalFactorBtn');
+  const optionsListEl = document.getElementById('dpOptionsList');
+
+  const decisionProblems = [];
+  let activeDecisionProblemId = null;
+
+  function createDecisionProblem(name) {
+    return {
+      id: `dp-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      name,
+      policy: '',
+      optionsText: '',
+      externalFactors: [],
+      internalFactors: [],
+      lastResponse: null
+    };
+  }
+
+  function getActiveDecisionProblem() {
+    return decisionProblems.find(dp => dp.id === activeDecisionProblemId) || null;
+  }
+
+  function parseOptions(optionsText) {
+    return optionsText
+      .split(',')
+      .map(opt => opt.trim())
+      .filter(opt => opt);
+  }
+
+  function renderDecisionProblemPicker() {
+    dpSelectEl.innerHTML = '';
+    queryTargetSelectEl.innerHTML = '';
+
+    decisionProblems.forEach((dp, index) => {
+      const optionLabel = `${index + 1}. ${dp.name}`;
+
+      const activeOptionEl = document.createElement('option');
+      activeOptionEl.value = dp.id;
+      activeOptionEl.textContent = optionLabel;
+      dpSelectEl.appendChild(activeOptionEl);
+
+      const targetOptionEl = document.createElement('option');
+      targetOptionEl.value = dp.id;
+      targetOptionEl.textContent = optionLabel;
+      queryTargetSelectEl.appendChild(targetOptionEl);
+    });
+
+    dpSelectEl.value = activeDecisionProblemId;
+    if (!queryTargetSelectEl.value) {
+      queryTargetSelectEl.value = activeDecisionProblemId;
+    }
+  }
+
+  function renderExternalFactorsRows(factors) {
+    externalFactorsContainerEl.innerHTML = '';
+    factors.forEach((factorItem, index) => {
+      const factDiv = document.createElement('div');
+      factDiv.className = 'fact-input';
+      factDiv.dataset.index = index;
+      const factStatus = factorItem.factStatus || (factorItem.factHold ? 'true' : 'unknown');
+      factDiv.innerHTML = `
+        <input type="text" class="fact-text" placeholder="Factor description" value="${factorItem.fact.replace(/"/g, '&quot;')}">
+        <div class="fact-input-footer">
+          <label class="fact-status-row">
+            Status
+            <select class="fact-status-select">
+              <option value="unknown" ${factStatus === 'unknown' ? 'selected' : ''}>Unknown</option>
+              <option value="true" ${factStatus === 'true' ? 'selected' : ''}>True</option>
+              <option value="false" ${factStatus === 'false' ? 'selected' : ''}>False</option>
+            </select>
+          </label>
+          <div class="fact-input-actions">
+            <button type="button" class="remove-fact-btn">Remove</button>
+          </div>
+        </div>
+      `;
+      externalFactorsContainerEl.appendChild(factDiv);
+    });
+  }
+
+  function renderInternalFactorsRows(factors) {
+    internalFactorsContainerEl.innerHTML = '';
+    factors.forEach((factorItem, index) => {
+      const factDiv = document.createElement('div');
+      factDiv.className = 'fact-input internal-fact-input';
+      factDiv.dataset.index = index;
+      const factStatus = factorItem.factStatus || (factorItem.factHold ? 'true' : 'unknown');
+      factDiv.innerHTML = `
+        <input type="text" class="fact-text" placeholder="Factor description" value="${factorItem.fact.replace(/"/g, '&quot;')}">
+        <select class="factor-rp-source">
+          ${decisionProblems.map(dp => `<option value="${dp.id}" ${dp.id === factorItem.rpSource ? 'selected' : ''}>${dp.name.replace(/"/g, '&quot;')}</option>`).join('')}
+        </select>
+        <select class="fact-status-select">
+          <option value="unknown" ${factStatus === 'unknown' ? 'selected' : ''}>Unknown</option>
+          <option value="true" ${factStatus === 'true' ? 'selected' : ''}>True</option>
+          <option value="false" ${factStatus === 'false' ? 'selected' : ''}>False</option>
+        </select>
+        <button type="button" class="remove-fact-btn">Remove</button>
+      `;
+      internalFactorsContainerEl.appendChild(factDiv);
+    });
+  }
+
+  function renderOptionsPreview(optionsText) {
+    const options = parseOptions(optionsText);
+    optionsListEl.innerHTML = '';
+
+    if (options.length === 0) {
+      const emptyEl = document.createElement('span');
+      emptyEl.className = 'option-empty';
+      emptyEl.textContent = 'No options set yet for this decision problem.';
+      optionsListEl.appendChild(emptyEl);
+      return;
+    }
+
+    options.forEach(optionText => {
+      const pillEl = document.createElement('span');
+      pillEl.className = 'option-pill';
+      pillEl.textContent = optionText;
+      optionsListEl.appendChild(pillEl);
+    });
+  }
+
+  function loadActiveDecisionProblemToForm() {
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    policyInputEl.value = activeDp.policy;
+    dpNameInputEl.value = activeDp.name;
+    optionsInputEl.value = activeDp.optionsText;
+    renderExternalFactorsRows(activeDp.externalFactors);
+    renderInternalFactorsRows(activeDp.internalFactors);
+    renderOptionsPreview(activeDp.optionsText);
+
+    if (activeDp.lastResponse) {
+      window.cognicaAPI.displayPrediction('customPredictionResult', activeDp.lastResponse);
+    } else {
+      document.getElementById('customPredictionResult').innerHTML = '';
+    }
+  }
+
+  function captureFormIntoActiveDecisionProblem() {
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    activeDp.name = dpNameInputEl.value.trim() || activeDp.name;
+    activeDp.policy = policyInputEl.value;
+    activeDp.optionsText = optionsInputEl.value;
+    renderOptionsPreview(activeDp.optionsText);
+  }
+
+  function createAndActivateDecisionProblem() {
+    const dpNumber = decisionProblems.length + 1;
+    const newDp = createDecisionProblem(`Decision Problem ${dpNumber}`);
+    decisionProblems.push(newDp);
+    activeDecisionProblemId = newDp.id;
+    renderDecisionProblemPicker();
+    loadActiveDecisionProblemToForm();
+  }
+
+  // Keep Enter behavior for the policy box predictable.
+  policyInputEl.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = `${this.value.slice(0, start)}\n${this.value.slice(end)}`;
+      this.selectionStart = this.selectionEnd = start + 1;
+      captureFormIntoActiveDecisionProblem();
+    }
+  });
+
+  policyInputEl.addEventListener('input', captureFormIntoActiveDecisionProblem);
+  optionsInputEl.addEventListener('input', captureFormIntoActiveDecisionProblem);
+
+  dpNameInputEl.addEventListener('input', function() {
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    const trimmedName = dpNameInputEl.value.trim();
+    activeDp.name = trimmedName || activeDp.name;
+    const selectedTarget = queryTargetSelectEl.value;
+    renderDecisionProblemPicker();
+    dpSelectEl.value = activeDecisionProblemId;
+    queryTargetSelectEl.value = selectedTarget || activeDecisionProblemId;
+  });
+
+  dpSelectEl.addEventListener('change', function() {
+    captureFormIntoActiveDecisionProblem();
+    activeDecisionProblemId = this.value;
+    loadActiveDecisionProblemToForm();
+  });
+
+  newDpBtnEl.addEventListener('click', function() {
+    captureFormIntoActiveDecisionProblem();
+    createAndActivateDecisionProblem();
+  });
+
+  addExternalFactorBtnEl.addEventListener('click', function() {
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    activeDp.externalFactors.push({ fact: '', factHold: false, factStatus: 'unknown', rpSource: '' });
+    renderExternalFactorsRows(activeDp.externalFactors);
+  });
+
+  addInternalFactorBtnEl.addEventListener('click', function() {
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    activeDp.internalFactors.push({ fact: '', factHold: false, factStatus: 'unknown', rpSource: activeDecisionProblemId || '' });
+    renderInternalFactorsRows(activeDp.internalFactors);
+  });
+
+  externalFactorsContainerEl.addEventListener('input', function(event) {
+    const row = event.target.closest('.fact-input');
+    if (!row) {
+      return;
+    }
+
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    const index = Number(row.dataset.index);
+    if (Number.isNaN(index) || !activeDp.externalFactors[index]) {
+      return;
+    }
+
+    activeDp.externalFactors[index].fact = row.querySelector('.fact-text').value;
+  });
+
+  internalFactorsContainerEl.addEventListener('input', function(event) {
+    const row = event.target.closest('.fact-input');
+    if (!row) {
+      return;
+    }
+
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    const index = Number(row.dataset.index);
+    if (Number.isNaN(index) || !activeDp.internalFactors[index]) {
+      return;
+    }
+
+    if (event.target.classList.contains('factor-rp-source')) {
+      activeDp.internalFactors[index].rpSource = event.target.value;
+      return;
+    }
+
+    activeDp.internalFactors[index].fact = row.querySelector('.fact-text').value;
+  });
+
+  externalFactorsContainerEl.addEventListener('change', function(event) {
+    const row = event.target.closest('.fact-input');
+    if (!row) {
+      return;
+    }
+
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    const index = Number(row.dataset.index);
+    if (Number.isNaN(index) || !activeDp.externalFactors[index]) {
+      return;
+    }
+
+    if (event.target.classList.contains('fact-status-select')) {
+      activeDp.externalFactors[index].factStatus = event.target.value;
+      activeDp.externalFactors[index].factHold = event.target.value !== 'unknown';
+      return;
+    }
+
+    if (!event.target.classList.contains('fact-hold')) {
+      return;
+    }
+
+    activeDp.externalFactors[index].factHold = event.target.checked;
+    activeDp.externalFactors[index].factStatus = event.target.checked ? 'true' : 'false';
+  });
+
+  internalFactorsContainerEl.addEventListener('change', function(event) {
+    if (event.target.classList.contains('factor-rp-source')) {
+      const row = event.target.closest('.fact-input');
+      if (!row) {
+        return;
+      }
+
+      const activeDp = getActiveDecisionProblem();
+      if (!activeDp) {
+        return;
+      }
+
+      const index = Number(row.dataset.index);
+      if (Number.isNaN(index) || !activeDp.internalFactors[index]) {
+        return;
+      }
+
+      activeDp.internalFactors[index].rpSource = event.target.value;
+      return;
+    }
+
+    if (event.target.classList.contains('fact-status-select')) {
+      const row = event.target.closest('.fact-input');
+      if (!row) {
+        return;
+      }
+
+      const activeDp = getActiveDecisionProblem();
+      if (!activeDp) {
+        return;
+      }
+
+      const index = Number(row.dataset.index);
+      if (Number.isNaN(index) || !activeDp.internalFactors[index]) {
+        return;
+      }
+
+      activeDp.internalFactors[index].factStatus = event.target.value;
+      activeDp.internalFactors[index].factHold = event.target.value !== 'unknown';
+      return;
+    }
+  });
+
+  externalFactorsContainerEl.addEventListener('click', function(event) {
+    if (!event.target.classList.contains('remove-fact-btn')) {
+      return;
+    }
+
+    const row = event.target.closest('.fact-input');
+    if (!row) {
+      return;
+    }
+
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    const index = Number(row.dataset.index);
+    if (Number.isNaN(index)) {
+      return;
+    }
+
+    activeDp.externalFactors.splice(index, 1);
+    renderExternalFactorsRows(activeDp.externalFactors);
+  });
+
+  internalFactorsContainerEl.addEventListener('click', function(event) {
+    if (!event.target.classList.contains('remove-fact-btn')) {
+      return;
+    }
+
+    const row = event.target.closest('.fact-input');
+    if (!row) {
+      return;
+    }
+
+    const activeDp = getActiveDecisionProblem();
+    if (!activeDp) {
+      return;
+    }
+
+    const index = Number(row.dataset.index);
+    if (Number.isNaN(index)) {
+      return;
+    }
+
+    activeDp.internalFactors.splice(index, 1);
+    renderInternalFactorsRows(activeDp.internalFactors);
+  });
+
+  submitBtnEl.addEventListener('click', async function() {
+    captureFormIntoActiveDecisionProblem();
+    const targetDpId = queryTargetSelectEl.value;
+    const targetDp = decisionProblems.find(dp => dp.id === targetDpId);
+    if (!targetDp) {
+      return;
+    }
+
+    const queryText = queryInputEl.value.trim();
+
+    if (!targetDp.policy || !queryText) {
+      alert('Please fill in Policy for the target DP and provide a Query.');
+      return;
+    }
+
+    const options = parseOptions(targetDp.optionsText);
+    const factors = [
+      ...(Array.isArray(targetDp.externalFactors) ? targetDp.externalFactors : []),
+      ...(Array.isArray(targetDp.internalFactors) ? targetDp.internalFactors : [])
+    ].filter(factor => factor.fact && factor.fact.trim());
+    const cognicaRequest = window.cognicaAPI.createCognicaRequest(
+      targetDp.policy,
+      queryText,
+      options,
+      factors
+    );
+
+    this.disabled = true;
+    this.textContent = 'Loading...';
+
+    const response = await window.cognicaAPI.getPrediction(cognicaRequest);
+    targetDp.lastResponse = response;
+    window.cognicaAPI.displayPrediction('customPredictionResult', response);
+
+    this.disabled = false;
+    this.textContent = 'Submit Query';
+  });
+
+  createAndActivateDecisionProblem();
+</script>
+</body>
+</html>
