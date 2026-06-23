@@ -7,42 +7,42 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.app.model.StoredCognicaRequest;
-import com.example.app.repository.clinical.ClinicalStoredCognicaRequestRepository;
+import com.example.app.repository.clinical.ClinicalDecisionProblemStore;
 
 @Service
 public class ClinicalStoredRequestService {
 
     @Autowired
-    private ClinicalStoredCognicaRequestRepository repository;
+    private ClinicalDecisionProblemStore store;
 
     public StoredCognicaRequest saveRequest(StoredCognicaRequest request) {
-        return repository.save(request);
+        return store.save(request);
     }
 
     public List<StoredCognicaRequest> getAllRequests() {
-        return repository.findAllByOrderByUpdatedAtDesc();
+        return store.findAllByOrderByUpdatedAtDesc();
     }
 
     public Optional<StoredCognicaRequest> getRequestById(Long id) {
-        return repository.findById(id);
+        return store.findById(id);
     }
 
     public List<StoredCognicaRequest> searchByName(String name) {
-        return repository.findByNameContainingIgnoreCase(name);
+        return store.findByNameContainingIgnoreCase(name);
     }
 
     public List<StoredCognicaRequest> findByExactName(String name) {
-        return repository.findByNameIgnoreCase(name);
+        return store.findByNameIgnoreCase(name);
     }
 
     public void deleteRequest(Long id) {
-        repository.deleteById(id);
+        store.deleteById(id);
     }
 
     public void updateLastResponse(Long id, String responseJson) {
-        repository.findById(id).ifPresent(sr -> {
+        store.findById(id).ifPresent(sr -> {
             sr.setLastResponseJson(responseJson);
-            repository.save(sr);
+            store.save(sr);
         });
     }
 }

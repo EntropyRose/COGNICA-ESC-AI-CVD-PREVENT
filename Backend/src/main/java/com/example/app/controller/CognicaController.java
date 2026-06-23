@@ -11,7 +11,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -43,13 +45,26 @@ public class CognicaController {
 
     private static final int MAX_AUTO_RESOLUTION_ROUNDS = 5;
 
-    private final String COGNICA_URL = "https://cognica.cs.ucy.ac.cy/COGNICAd/api.php";
-    private final WebClient webClient = WebClient.builder()
-        .defaultHeaders(headers -> {
-            headers.setBasicAuth("ctziovannis2020@gmail.com", "RUOK?Busta_Walf!");
-            headers.setContentType(MediaType.APPLICATION_JSON);
-        })
-        .build();
+    @Value("${cognica.api.url}")
+    private String COGNICA_URL;
+
+    @Value("${cognica.api.username}")
+    private String cognicaUsername;
+
+    @Value("${cognica.api.password}")
+    private String cognicaPassword;
+
+    private WebClient webClient;
+
+    @PostConstruct
+    private void initWebClient() {
+        this.webClient = WebClient.builder()
+            .defaultHeaders(headers -> {
+                headers.setBasicAuth(cognicaUsername, cognicaPassword);
+                headers.setContentType(MediaType.APPLICATION_JSON);
+            })
+            .build();
+    }
 
     @Autowired
     private StoredRequestService storedRequestService;
