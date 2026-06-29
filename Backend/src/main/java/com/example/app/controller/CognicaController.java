@@ -41,6 +41,8 @@ import com.example.app.util.RuleTransformer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -48,6 +50,7 @@ import reactor.core.publisher.Mono;
 @CrossOrigin(origins = "*")
 public class CognicaController {
 
+    private static final Logger log = LoggerFactory.getLogger(CognicaController.class);
     private static final int MAX_AUTO_RESOLUTION_ROUNDS = 5;
 
     @Value("${cognica.api.url}")
@@ -83,6 +86,7 @@ public class CognicaController {
 
     @PostMapping("/predict")
     public Mono<ResponseEntity<CognicaResponse>> getPrediction(@RequestBody StoredCognicaRequest request) {
+        log.info("[predict] received request, calling Cognica API at {}", COGNICA_URL);
         String policy;
         try {
             String originalPolicy = request.getPolicyInCognicaDPCNL();
@@ -115,6 +119,7 @@ public class CognicaController {
             .retrieve()
             .toEntity(CognicaResponse.class)
             .onErrorResume(ex -> {
+                log.error("[predict] Cognica API call failed: {}", ex.getMessage());
                 CognicaResponse errorResponse = new CognicaResponse();
                 errorResponse.setHasError(true);
                 errorResponse.setErrorMessage("Cognica API unreachable: " + ex.getMessage());

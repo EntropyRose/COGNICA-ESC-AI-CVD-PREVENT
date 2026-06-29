@@ -29,7 +29,7 @@ async function getPrediction(cognicaRequest) {
     } catch (error) {
         console.error('Error calling Cognica API:', error);
         const friendlyMessage = error.message === 'Failed to fetch'
-            ? 'Failed to fetch. Check that the backend is running and open the app from http://localhost:8080.'
+            ? 'Failed to fetch. Check that the backend server is running.'
             : error.message;
         return {
             hasError: true,
