@@ -68,7 +68,7 @@ public class CognicaController {
     private void initWebClient() {
         HttpClient httpClient = HttpClient.create()
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
-            .responseTimeout(Duration.ofSeconds(30));
+            .responseTimeout(Duration.ofSeconds(20));
 
         this.webClient = WebClient.builder()
             .clientConnector(new ReactorClientHttpConnector(httpClient))
