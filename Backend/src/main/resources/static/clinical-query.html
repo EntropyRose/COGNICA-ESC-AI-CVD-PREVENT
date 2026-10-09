@@ -270,6 +270,7 @@
             border-radius: 8px;
             border: 1px solid #e0e7ff;
             overflow-y: auto;
+            scroll-margin-top: 12px;
         }
 
         /* Category cards */
@@ -1131,11 +1132,16 @@
         catTreatmentBtnEl.addEventListener('click', () => runCategory('treatment', catTreatmentBtnEl));
         catUniqueBtnEl.addEventListener('click',    () => runCategory('unique',    catUniqueBtnEl));
 
+        function scrollToResults() {
+            resultsTitleEl.closest('.results-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         async function runCategory(category, buttonEl) {
             const matching = allRequests.filter(r => getDpCategory(r.name) === category);
 
             const meta = CATEGORY_META[category];
             resultsTitleEl.textContent = meta.icon + ' ' + meta.label;
+            scrollToResults();
 
             if (matching.length === 0) {
                 resultsContainerEl.innerHTML = `
