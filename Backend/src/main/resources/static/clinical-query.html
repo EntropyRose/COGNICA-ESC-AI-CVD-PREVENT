@@ -1424,7 +1424,7 @@
                         <div class="multi-result-list">
                             <span class="multi-result-pill">${escapeHtml(it.label)}</span>
                         </div>
-                        ${it.explanation ? `<div class="result-explanation">${formatExplanation(it.explanation)}</div>` : ''}`
+                        ${scrubExplanation(it.explanation) ? `<div class="result-explanation">${formatExplanation(it.explanation)}</div>` : ''}`
                     ).join('')
                     : `<div class="multi-result-none">No specific recommendations based on current patient data.</div>`
                       + buildTellUsMore(dp, data.evaluatedFacts || []);
@@ -1477,7 +1477,7 @@
             card.innerHTML = `
                 <div class="result-query">${escapeHtml(dp.name)}</div>
                 <div class="result-answer ${answerClass}"><strong>${escapeHtml(concl.label)}</strong></div>
-                ${explanation ? `<div class="result-explanation">${formatExplanation(explanation)}${concl.priorityNote ? ' ' + escapeHtml(concl.priorityNote) : ''}</div>` : ''}
+                ${scrubExplanation(explanation) ? `<div class="result-explanation">${formatExplanation(explanation)}${concl.priorityNote ? ' ' + escapeHtml(concl.priorityNote) : ''}</div>` : ''}
                 ${steps.length > 0 ? buildSolutionTrace(steps) : ''}
                 ${tellMore}`;
 
@@ -1499,7 +1499,7 @@
             // ── CVD Risk Estimation Method ───────────────────────────────────
             'use_score2':                  'Use SCORE2',
             'use_score2_op':               'Use SCORE2-OP',
-            'no_risk_estimation_required': 'No Risk Estimation Required',
+            'no_risk_estimation_required': 'No Further Risk Estimation Required',
             // ── Dyslipidaemias in diabetes mellitus ──────────────────────────
             'ldl_reduction_gte_50_percent_and_ldl_goal_gt_1_4_mmol_l': 'LDL ≥50% reduction + target <1.4 mmol/L',
             'ldl_reduction_gte_50_percent_and_ldl_goal_gt_1_8_mmol_l': 'LDL ≥50% reduction + target <1.8 mmol/L',
@@ -1671,7 +1671,7 @@
             const questions = display.map(f => {
                 const linked = findLinkedDp(f.fact, dp.name);
                 const linkedBtn = linked
-                    ? `<button class="fact-btn fact-btn-link" data-linked-dp-id="${linked.dp.id}" data-query-fact="${escapeHtml(f.fact)}">${linked.label} ↗</button>`
+                    ? `<button class="fact-btn fact-btn-link" data-linked-dp-id="${linked.dp.id}" data-query-fact="${escapeHtml(linked.query || f.fact)}">${linked.label} ↗</button>`
                     : '';
                 return `
                     <div class="tell-more-question" data-fact="${escapeHtml(f.fact)}">
@@ -1911,8 +1911,9 @@
             // Risk Level DP
             'very_high_risk':         { dpName: 'risk level',                label: 'Check Risk Level' },
             'high_risk':              { dpName: 'risk level',                label: 'Check Risk Level' },
-            'very_high_cvd_risk':     { dpName: 'risk level',                label: 'Check Risk Level' },
-            'high_cvd_risk':          { dpName: 'risk level',                label: 'Check Risk Level' },
+            // query = the linked DP's own option name, when it differs from the fact name
+            'very_high_cvd_risk':     { dpName: 'risk level',                label: 'Check Risk Level', query: 'very_high_risk' },
+            'high_cvd_risk':          { dpName: 'risk level',                label: 'Check Risk Level', query: 'high_risk' },
             'low_cvd_risk':           { dpName: 'risk level',                label: 'Check Risk Level' },
             'low/med_cvd_risk':       { dpName: 'risk level',                label: 'Check Risk Level' },
         };
@@ -1932,7 +1933,7 @@
             const allowed = DP_LINK_WHITELIST[parentKey];
             if (allowed !== undefined && !allowed.includes(rule.dpName)) return null;
             const dp = allRequests.find(r => r.name.toLowerCase() === rule.dpName);
-            return dp ? { dp, label: rule.label } : null;
+            return dp ? { dp, label: rule.label, query: rule.query } : null;
         }
 
         // ── Explicit DP → fact → evaluator lookup table ──────────────────────
@@ -2803,7 +2804,14 @@
 
         // Escapes HTML then bolds anything that was in quotes (straight or curly, single or double).
         // Uses String.fromCharCode for quote chars to prevent edit-tool corruption.
+        // Drop Cognica boilerplate that confuses users; display-only, raw text is kept for parsing.
+        function scrubExplanation(text) {
+            if (!text) return '';
+            return text.replace(/\s*The opposite conclusion cannot be supported[^.]*\.?/gi, '').trim();
+        }
+
         function formatExplanation(text) {
+            text = scrubExplanation(text);
             if (!text) return '';
             const SQ  = String.fromCharCode(39);    // '  straight single
             const DQ  = String.fromCharCode(34);    // “  straight double
