@@ -1191,9 +1191,14 @@
                 const rlIdx = toRun.findIndex(dp => dp.name.toLowerCase().trim() === 'risk level');
                 if (rlIdx >= 0 && settled[rlIdx].status === 'fulfilled') {
                     const rlResult = settled[rlIdx].value;
-                    if (!rlResult.hasError && rlResult.cognicaPrediction) {
-                        cachedRiskFacts = riskPredToFacts(rlResult.cognicaPrediction);
+                    // Cognica returns Yes/No/Maybe, so cache by the risk level that got the Yes.
+                    // A Maybe is not cached: treatment DPs then keep the risk facts unknown and ask.
+                    if (!rlResult.hasError && rlResult.resolvedQuery) {
+                        cachedRiskFacts = riskPredToFacts(rlResult.resolvedQuery);
                         try { localStorage.setItem('cognica_risk_facts', JSON.stringify(cachedRiskFacts)); } catch {}
+                    } else {
+                        cachedRiskFacts = null;
+                        try { localStorage.removeItem('cognica_risk_facts'); } catch {}
                     }
                 }
             }
@@ -1388,7 +1393,7 @@
                 if (result.hasError) return result;
                 lastResult = result;
                 const pred = (result.cognicaPrediction || '').trim().toUpperCase();
-                if (pred.startsWith('YES'))   return result;
+                if (pred.startsWith('YES'))   return { ...result, resolvedQuery: query };
                 if (pred.startsWith('MAYBE') && !firstMaybe) firstMaybe = result;
             }
 
